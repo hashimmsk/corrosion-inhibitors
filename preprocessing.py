@@ -34,12 +34,6 @@ from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-
-# ---------------------------------------------------------------------------
-# Configuration
-# ---------------------------------------------------------------------------
-
-
 @dataclass
 class PreprocessingConfig:
     """
@@ -48,19 +42,13 @@ class PreprocessingConfig:
 
     dataset_path: str
     label_column: str = "IE"
-    feature_columns: Optional[Sequence[str]] = None  # if None, infer as all non-label
+    feature_columns: Optional[Sequence[str]] = None
     train_ratio: float = 0.7
     val_ratio: float = 0.15
     test_ratio: float = 0.15
     random_state: int = 0
     do_impute: bool = True
     do_scale: bool = True
-
-
-# ---------------------------------------------------------------------------
-# File / dataset loading
-# ---------------------------------------------------------------------------
-
 
 def locate_dataset_file(base_dir: str) -> str:
     """
@@ -82,7 +70,6 @@ def locate_dataset_file(base_dir: str) -> str:
         f"Expected one of: {', '.join(candidates)}"
     )
 
-
 def load_raw_dataset(path: str) -> pd.DataFrame:
     """
     Load the raw dataset from CSV or Excel.
@@ -94,12 +81,6 @@ def load_raw_dataset(path: str) -> pd.DataFrame:
     if ext in (".xlsx", ".xls"):
         return pd.read_excel(path)
     raise ValueError(f"Unsupported dataset extension: {ext}")
-
-
-# ---------------------------------------------------------------------------
-# Cleaning and feature/label setup (row-wise, no learning)
-# ---------------------------------------------------------------------------
-
 
 def clean_dataset(df: pd.DataFrame, config: PreprocessingConfig) -> pd.DataFrame:
     """
@@ -116,22 +97,17 @@ def clean_dataset(df: pd.DataFrame, config: PreprocessingConfig) -> pd.DataFrame
 
     cleaned = df.copy()
 
-    # Drop index-like column
     if "No" in cleaned.columns:
         cleaned.drop(columns=["No"], inplace=True)
 
-    # IE correction using AA, then drop AA
     if {"IE", "AA"}.issubset(cleaned.columns):
         cleaned["IE"] = (cleaned["IE"] * cleaned["AA"]) / 100.0
         cleaned.drop(columns=["AA"], inplace=True)
 
-    # Remove duplicate rows
     cleaned.drop_duplicates(inplace=True)
 
-    # Drop columns that are entirely NaN
     cleaned.dropna(axis=1, how="all", inplace=True)
 
-    # Drop Excel "Unnamed" columns
     cleaned = cleaned.loc[:, [
         col for col in cleaned.columns
         if not str(col).lower().startswith("unnamed:")
@@ -139,17 +115,14 @@ def clean_dataset(df: pd.DataFrame, config: PreprocessingConfig) -> pd.DataFrame
 
     cleaned.reset_index(drop=True, inplace=True)
 
-    # Ensure label exists
     if config.label_column not in cleaned.columns:
         raise KeyError(
             f"Label column '{config.label_column}' not found in dataset "
             f"columns: {list(cleaned.columns)}"
         )
 
-    # Drop rows where label is NaN (we cannot train on those)
     cleaned = cleaned.dropna(subset=[config.label_column]).reset_index(drop=True)
 
-    # Put label column at the end
     ordered_cols = [c for c in cleaned.columns if c != config.label_column] + [
         config.label_column
     ]
@@ -173,12 +146,6 @@ def infer_feature_columns(df: pd.DataFrame,
         return list(config.feature_columns)
 
     return [c for c in df.columns if c != config.label_column]
-
-
-# ---------------------------------------------------------------------------
-# Splitting
-# ---------------------------------------------------------------------------
-
 
 def validate_split_ratios(config: PreprocessingConfig) -> None:
     total = config.train_ratio + config.val_ratio + config.test_ratio
@@ -211,7 +178,6 @@ def split_dataset(
     empty_X = pd.DataFrame(columns=feature_cols)
     empty_y = target.iloc[0:0]
 
-    # Special case: all train
     if config.train_ratio == 1.0 or (
         config.val_ratio == 0.0 and config.test_ratio == 0.0
     ):
@@ -224,7 +190,6 @@ def split_dataset(
             "y_test": empty_y.copy(),
         }
 
-    # First split: train vs (val+test)
     val_test_ratio = config.val_ratio + config.test_ratio
     X_train, X_temp, y_train, y_temp = train_test_split(
         features,
@@ -234,7 +199,6 @@ def split_dataset(
         random_state=config.random_state,
     )
 
-    # Only test, no val
     if config.val_ratio == 0.0:
         return {
             "X_train": X_train,
@@ -245,7 +209,6 @@ def split_dataset(
             "y_test": y_temp,
         }
 
-    # Only val, no test
     if config.test_ratio == 0.0:
         return {
             "X_train": X_train,
@@ -256,7 +219,6 @@ def split_dataset(
             "y_test": empty_y.copy(),
         }
 
-    # Split the temp set into val and test
     test_fraction = config.test_ratio / val_test_ratio
     X_val, X_test, y_val, y_test = train_test_split(
         X_temp,
@@ -274,12 +236,6 @@ def split_dataset(
         "X_test": X_test,
         "y_test": y_test,
     }
-
-
-# ---------------------------------------------------------------------------
-# Main preprocessing pipeline
-# ---------------------------------------------------------------------------
-
 
 def preprocess_dataset(config: PreprocessingConfig) -> Dict[str, object]:
     """
@@ -307,23 +263,18 @@ def preprocess_dataset(config: PreprocessingConfig) -> Dict[str, object]:
         - 'scaler'
     """
 
-    # Load & clean
     raw_df = load_raw_dataset(config.dataset_path)
     cleaned_df = clean_dataset(raw_df, config)
 
-    # Features and label
     feature_columns = infer_feature_columns(cleaned_df, config)
     features = cleaned_df[feature_columns]
     target = cleaned_df[config.label_column]
 
-    # Train/val/test split
     splits = split_dataset(features, target, config)
 
-    # Prepare transformers
     imputer: Optional[SimpleImputer] = None
     scaler: Optional[StandardScaler] = None
 
-    # ---- Imputation ----
     if config.do_impute:
         imputer = SimpleImputer(strategy="mean")
         X_train_imputed = pd.DataFrame(
@@ -342,20 +293,17 @@ def preprocess_dataset(config: PreprocessingConfig) -> Dict[str, object]:
             index=splits["X_test"].index,
         )
 
-        # For EDA: full dataset imputed (no split)
         full_features_imputed = pd.DataFrame(
             imputer.transform(features),
             columns=feature_columns,
             index=features.index,
         )
     else:
-        # No imputation; pass-through
         X_train_imputed = splits["X_train"].copy()
         X_val_imputed = splits["X_val"].copy()
         X_test_imputed = splits["X_test"].copy()
         full_features_imputed = features.copy()
 
-    # ---- Scaling ----
     if config.do_scale:
         scaler = StandardScaler()
         X_train_scaled = pd.DataFrame(
@@ -374,16 +322,13 @@ def preprocess_dataset(config: PreprocessingConfig) -> Dict[str, object]:
             index=X_test_imputed.index,
         )
     else:
-        # No scaling; pass-through imputed
         X_train_scaled = X_train_imputed.copy()
         X_val_scaled = X_val_imputed.copy()
         X_test_scaled = X_test_imputed.copy()
 
-    # ---- Dataset for EDA ----
     dataset_for_eda = full_features_imputed.copy()
     dataset_for_eda[config.label_column] = target
 
-    # Build structured output
     processed = {
         "config": config,
         "cleaned_df": cleaned_df,
@@ -414,12 +359,6 @@ def preprocess_dataset(config: PreprocessingConfig) -> Dict[str, object]:
         "scaler": scaler,
     }
     return processed
-
-
-# ---------------------------------------------------------------------------
-# Optional: quick CLI-style usage
-# ---------------------------------------------------------------------------
-
 
 def _find_default_dataset_path(this_dir: str) -> str:
     """
@@ -475,7 +414,6 @@ if __name__ == "__main__":
     )
     pre = preprocess_dataset(cfg)
 
-    # Save cleaned full dataset and splits (scaled) for convenience
     pre["cleaned_df"].to_csv(
         os.path.join(processed_dir, "cleaned_full.csv"), index=False
     )
