@@ -1,0 +1,52 @@
+1. Goal:
+   - main goal is to optimize inhibitor structure and dosage in realistic systems
+   - for that we'll develop data-driven ml model to predict the IE (inhibition efficiency) from molecular and operating-condition features
+
+2. Problem Definition:
+   - input features are C# (carbon number), Mw (molecular weight), HLB (hydrophilic-lipophilic balance), EO (ethylene oxide units), Conc (concentration of inhibitor), pH (potential of hydrogen)
+   - prediction feature is IE (inhibition efficiency)
+   - AA (active agent) is used to rescale the IE
+
+3. Data Collection & Understanding:
+   - Data consists of ~300 lab samples from corrosion experiments
+   - Each sample includes:
+     - The inhibitor formulation (C#, Mw, HLB, EO, AA)
+     - The test conditions (Conc, pH)
+     - The measured performance (IE)
+
+4. Data Preprocessing & Cleaning:
+   - Implemented a reusable preprocessing pipeline to handle all data loading and cleaning
+   - Removed non-informative columns
+   - Applied the IE correction using the active agent (AA) and then dropped AA
+   - Dropped duplicate rows and rows with missing IE to ensure a clean target
+   - Imputed missing features using mean imputation (fitted on the training data only)
+   - Standardized all input features using StandardScaler (fitted on training data only)
+   - Split the cleaned dataset into train/validation/test (70/15/15) and saved: cleaned_full.csv, train.csv, val.csv, test.csv under data/processed/
+
+5. Exploratory Data Analysis (EDA):
+   - Implemented an EDA script that:
+     - Loads the cleaned dataset (cleaned_full.csv or via preprocessing pipeline)
+     - Plots histograms for all features and IE to inspect distributions
+     - Computes and visualizes a Pearson correlation heatmap for C#, Mw, HLB, EO, Conc, pH, IE
+     - Generates scatter plots of IE vs key drivers (Conc, pH, HLB, EO) to see how inhibition efficiency responds to changes in these variables
+   - Centralized all EDA output in data/eda/ for easy review and reporting
+
+6. Feature Engineering & Selection:
+   - Defined a canonical v1 feature set for modeling: C#, Mw, HLB, EO, Conc, pH with IE as the prediction target
+   - Implemented feature-loading utilities (features.py) to:
+     - Reliably load train/val/test splits from data/processed/
+     - Expose consistent X_train, y_train, X_val, y_val, X_test, y_test only with the canonical features
+   - Ran a baseline feature-importance analysis (feature_importance.py) using:
+     - Linear regression coefficients (absolute, normalized)
+     - Random forest feature importances
+     - Permutation importance on the validation set
+   - Aggregated these into baseline_importance.csv to obtain a consensus ranking of feature importance, confirming:
+     - All six features carry signal for predicting IE
+     - Some variables (e.g., environmental/operating conditions like pH and dosage Conc) appear especially influential, guiding how we prioritize them in subsequent modeling
+
+7. Model Selection & Training
+
+8. Model Evaluation & Interpretation
+
+9. Optimization & Design Use-Case
+
