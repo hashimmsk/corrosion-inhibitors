@@ -34,6 +34,10 @@ from sklearn.impute import SimpleImputer
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
+FEATURE_COLUMNS: Sequence[str] = ("C#", "Mw", "HLB", "EO", "Conc", "pH")
+LABEL_COLUMN: str = "IE"
+
+
 @dataclass
 class PreprocessingConfig:
     """
@@ -41,7 +45,7 @@ class PreprocessingConfig:
     """
 
     dataset_path: str
-    label_column: str = "IE"
+    label_column: str = LABEL_COLUMN
     feature_columns: Optional[Sequence[str]] = None
     train_ratio: float = 0.7
     val_ratio: float = 0.15
@@ -123,9 +127,12 @@ def clean_dataset(df: pd.DataFrame, config: PreprocessingConfig) -> pd.DataFrame
 
     cleaned = cleaned.dropna(subset=[config.label_column]).reset_index(drop=True)
 
-    ordered_cols = [c for c in cleaned.columns if c != config.label_column] + [
+    ordered_cols = [c for c in cleaned.columns if c != config.label_column and c in FEATURE_COLUMNS] + [
         config.label_column
     ]
+    # Append any remaining non-feature columns (if feature_columns not provided) to preserve data.
+    remaining = [c for c in cleaned.columns if c not in ordered_cols]
+    ordered_cols = list(dict.fromkeys(ordered_cols + remaining))
     return cleaned.loc[:, ordered_cols]
 
 
@@ -139,11 +146,12 @@ def infer_feature_columns(df: pd.DataFrame,
     2. Otherwise, use all columns except the label.
     """
 
+    desired_columns = list(config.feature_columns) if config.feature_columns is not None else list(FEATURE_COLUMNS)
     if config.feature_columns is not None:
-        missing = [c for c in config.feature_columns if c not in df.columns]
+        missing = [c for c in desired_columns if c not in df.columns]
         if missing:
             raise KeyError(f"Missing expected feature columns: {missing}")
-        return list(config.feature_columns)
+        return desired_columns
 
     return [c for c in df.columns if c != config.label_column]
 
