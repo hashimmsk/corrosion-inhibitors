@@ -22,6 +22,8 @@
    - Imputed missing features using mean imputation (fitted on the training data only)
    - Standardized all input features using StandardScaler (fitted on training data only)
    - Split the cleaned dataset into train/validation/test (70/15/15) and saved: cleaned_full.csv, train.csv, val.csv, test.csv under data/processed/
+   - Archived the original dataset under data/archive/dataset_original.csv for traceability
+   - Created a constant‑pH variant (dataset.csv, pH fixed to dataset average) for sensitivity analysis
 
 5. Exploratory Data Analysis (EDA):
    - Implemented an EDA script that:
