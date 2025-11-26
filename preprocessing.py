@@ -136,24 +136,28 @@ def clean_dataset(df: pd.DataFrame, config: PreprocessingConfig) -> pd.DataFrame
     return cleaned.loc[:, ordered_cols]
 
 
-def infer_feature_columns(df: pd.DataFrame,
-                          config: PreprocessingConfig) -> Sequence[str]:
+def infer_feature_columns(
+    df: pd.DataFrame,
+    config: PreprocessingConfig
+) -> Sequence[str]:
     """
     Decide which columns are features.
 
     Priority:
-    1. If config.feature_columns is provided, use that (and validate).
-    2. Otherwise, use all columns except the label.
+    1. Use config.feature_columns if provided.
+    2. Otherwise fall back to the canonical FEATURE_COLUMNS list.
     """
 
-    desired_columns = list(config.feature_columns) if config.feature_columns is not None else list(FEATURE_COLUMNS)
     if config.feature_columns is not None:
-        missing = [c for c in desired_columns if c not in df.columns]
-        if missing:
-            raise KeyError(f"Missing expected feature columns: {missing}")
-        return desired_columns
+        desired = list(config.feature_columns)
+    else:
+        desired = [col for col in FEATURE_COLUMNS if col in df.columns]
 
-    return [c for c in df.columns if c != config.label_column]
+    missing = [col for col in desired if col not in df.columns]
+    if missing:
+        raise KeyError(f"Missing expected feature columns: {missing}")
+
+    return desired
 
 def validate_split_ratios(config: PreprocessingConfig) -> None:
     total = config.train_ratio + config.val_ratio + config.test_ratio
@@ -336,6 +340,10 @@ def preprocess_dataset(config: PreprocessingConfig) -> Dict[str, object]:
 
     dataset_for_eda = full_features_imputed.copy()
     dataset_for_eda[config.label_column] = target
+
+    # Retain medium information (if present) for downstream EDA.
+    if "medium" in cleaned_df.columns:
+        dataset_for_eda["medium"] = cleaned_df["medium"]
 
     processed = {
         "config": config,
