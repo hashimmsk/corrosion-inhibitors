@@ -193,11 +193,11 @@ def run_eda() -> None:
 
   hist_path = plot_histograms(df, feature_columns, output_dir)
   heatmap_path = plot_correlation_heatmap(df, feature_columns, output_dir)
-  scatter_path = plot_scatter_pairs(
-      df,
-      pairs=[("Conc", "IE"), ("pH", "IE"), ("HLB", "IE"), ("EO", "IE")],
-      out_dir=output_dir,
-  )
+  scatter_pairs = [("Conc", "IE"), ("HLB", "IE"), ("EO", "IE")]
+  if "medium" not in df.columns:
+    scatter_pairs.insert(1, ("pH", "IE"))
+
+  scatter_path = plot_scatter_pairs(df, pairs=scatter_pairs, out_dir=output_dir)
 
   print("EDA artifacts saved:")
   print(f" - Histograms: {hist_path}")
