@@ -16,9 +16,8 @@ env/
 .DS_Store
 Thumbs.db
 
-# Generated data artifacts
+# Generated data artifacts (keep this list in sync with what you want tracked)
 data/processed/
-data/eda/
 data/feature_importance/
 
 # Notebook checkpoints
