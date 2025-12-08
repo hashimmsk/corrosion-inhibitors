@@ -47,8 +47,26 @@
      - Some variables (e.g., environmental/operating conditions like pH and dosage Conc) appear especially influential, guiding how we prioritize them in subsequent modeling
 
 7. Model Selection & Training
+   - Implemented training harness (train.py) to load canonical splits, run GridSearchCV on seven model families (linear, ridge, lasso, elastic net, random forest, gradient boosting, SVR), rank by validation R², refit the winner on train+val, and evaluate on the held-out test set
+   - Parallelism switched to threading backend to avoid macOS loky resource-tracker issues; artifacts saved under data/models/
+   - Best model: RandomForestRegressor (n_estimators=200, max_depth=5, min_samples_leaf=1)
+     - Validation: R²=0.675, MAE=16.9, RMSE=21.0
+     - Test: R²=0.449, MAE=14.56, RMSE=19.53
+   - Outputs: model_results.json (all candidates), best_model_test_metrics.json (winner metrics), random_forest_model.pkl (fitted model), report.txt (summary)
 
 8. Model Evaluation & Interpretation
+   - Metrics: primary R²; secondary MAE/RMSE; report confidence intervals via simple bootstrap on val/test where feasible.
+   - Diagnostics to run on the selected model (current: random forest):
+     - Residual analysis: residual vs fitted, residual vs key drivers (Conc, pH) to spot heteroscedasticity or bias.
+     - Learning curves: gauge data sufficiency and variance/overfit balance.
+     - Permutation importance on val/test to confirm driver hierarchy; SHAP (tree SHAP) for local/global explanations.
+     - Partial dependence / ICE for top drivers (pH, Conc, Mw/EO) to visualize response curves.
+   - Stability checks:
+     - Sensitivity to pH (use constant-pH variant) and to dosage range; avoid extrapolation beyond training percentiles.
+     - Cross-validate on train only; keep test strictly held-out for final reporting.
+   - Deliverables:
+     - Plots: residuals, learning curves, permutation/SHAP importance, PDP/ICE for top features.
+     - Summary table of metrics (CV, val, test) and interpretation notes for key drivers.
 
 9. Optimization & Design Use-Case
 
