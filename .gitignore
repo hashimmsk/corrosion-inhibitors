@@ -1,27 +1,16 @@
-# Python bytecode
+# Python
 __pycache__/
 *.py[cod]
-*$py.class
 
-# Virtual environments
+# Environment
 .venv/
-venv/
-env/
 
-# Editor/IDE settings
-.vscode/
-.idea/
-
-# OS metadata
+# OS
 .DS_Store
-Thumbs.db
 
-# Generated data artifacts (keep this list in sync with what you want tracked)
+# Generated data (run scripts to regenerate)
 data/processed/
+data/eda/
 data/feature_importance/
-
-# Notebook checkpoints
-.ipynb_checkpoints/
-
-# Matplotlib cache
-.mplcache/
+data/models/
+data/evaluation/
