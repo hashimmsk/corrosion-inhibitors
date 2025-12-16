@@ -1,0 +1,51 @@
+{
+  "best_model": "random_forest",
+  "best_params": {
+    "n_estimators": 600,
+    "min_samples_leaf": 2,
+    "max_depth": 6
+  },
+  "val_metrics_best": {
+    "r2": 0.6932910453305743,
+    "mae": 16.33496224781365,
+    "rmse": 20.411821118775663
+  },
+  "test_metrics": {
+    "r2": 0.4172338153650619,
+    "mae": 15.187653150459901,
+    "rmse": 20.088565484660034
+  },
+  "all_models": [
+    {
+      "model": "random_forest",
+      "val_metrics": {
+        "r2": 0.6932910453305743,
+        "mae": 16.33496224781365,
+        "rmse": 20.411821118775663
+      },
+      "best_params": {
+        "n_estimators": 600,
+        "min_samples_leaf": 2,
+        "max_depth": 6
+      }
+    },
+    {
+      "model": "svr",
+      "val_metrics": {
+        "r2": 0.5556452364632116,
+        "mae": 20.377403397921892,
+        "rmse": 24.56877176447169
+      },
+      "best_params": {
+        "gamma": "scale",
+        "epsilon": 0.1,
+        "C": 100.0
+      }
+    }
+  ],
+  "config": {
+    "seed": 0,
+    "cv_splits": 3,
+    "n_iter": 18
+  }
+}

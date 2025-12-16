@@ -1,175 +1,125 @@
 """
-Model selection and training workflow for corrosion inhibitor IE prediction.
-
-Loads canonical train/val/test splits, runs compact hyperparameter searches,
-selects the best model on validation R^2, refits on train+val, evaluates on test,
-and saves metrics plus the fitted model artifact under data/models/.
+1) Load train/val/test splits
+2) Tune each model on TRAIN using CV (RandomizedSearchCV)
+3) Evaluate best tuned model on VAL and pick the winner
+4) Refit winner on TRAIN+VAL
+5) Evaluate once on TEST
+6) Save best pipeline + metrics to data/models/
 """
 
-from __future__ import annotations
-
 import json
-import pickle
-from pathlib import Path
-from typing import Dict, List, Tuple
-
 import numpy as np
 import pandas as pd
-from sklearn.ensemble import GradientBoostingRegressor, RandomForestRegressor
-from sklearn.linear_model import ElasticNet, Lasso, LinearRegression, Ridge
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-from sklearn.model_selection import GridSearchCV, KFold
-from sklearn.svm import SVR
-from joblib import parallel_backend
-
 import features
 
+from pathlib import Path
+from joblib import parallel_backend
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+from sklearn.model_selection import KFold, RandomizedSearchCV
+from sklearn.svm import SVR
 
-MetricDict = Dict[str, float]
-ResultDict = Dict[str, object]
+SEED = 0
+CV_SPLITS = 3
+N_ITER = 18
+OUT_DIR = Path(__file__).parent / "data" / "models"
 
-
-def _project_root() -> Path:
-    current = Path(__file__).resolve().parent
-    if (current / "data").exists():
-        return current
-    return current.parent
-
-
-def _metrics(y_true: pd.Series, y_pred: np.ndarray) -> MetricDict:
+def get_metrics(y_true, y_pred):
     return {
         "r2": float(r2_score(y_true, y_pred)),
         "mae": float(mean_absolute_error(y_true, y_pred)),
         "rmse": float(np.sqrt(mean_squared_error(y_true, y_pred))),
     }
 
-
-def _candidates() -> Dict[str, Tuple[object, Dict[str, List[object]]]]:
+def build_models():
     return {
-        "linear": (LinearRegression(), {}),
-        "ridge": (
-            Ridge(),
-            {"alpha": [0.1, 1.0, 10.0, 100.0]},
-        ),
-        "lasso": (
-            Lasso(max_iter=5000),
-            {"alpha": [0.001, 0.01, 0.1, 1.0]},
-        ),
-        "elasticnet": (
-            ElasticNet(max_iter=5000),
-            {"alpha": [0.001, 0.01, 0.1, 1.0], "l1_ratio": [0.2, 0.5, 0.8]},
-        ),
         "random_forest": (
-            RandomForestRegressor(random_state=0, n_jobs=-1),
-            {
-                "n_estimators": [200, 400],
-                "max_depth": [None, 5, 10],
-                "min_samples_leaf": [1, 2],
-            },
-        ),
-        "gbr": (
-            GradientBoostingRegressor(random_state=0),
-            {
-                "n_estimators": [200, 400],
-                "learning_rate": [0.05, 0.1],
-                "max_depth": [2, 3],
-            },
+            RandomForestRegressor(random_state=SEED, n_jobs=1),
+            {"n_estimators": [300, 600], "max_depth": [None, 6, 10], "min_samples_leaf": [1, 2, 4]},
         ),
         "svr": (
-            SVR(),
-            {
-                "C": [1.0, 10.0, 50.0],
-                "gamma": ["scale", "auto"],
-                "epsilon": [0.01, 0.1],
-            },
+            SVR(kernel="rbf", cache_size=2000),
+            {"C": [10.0, 50.0, 100.0], "gamma": ["scale", 0.1, 0.01], "epsilon": [0.01, 0.05, 0.1]},
         ),
     }
 
-
-def _serialize(value):
-    if isinstance(value, np.generic):
-        return value.item()
-    if isinstance(value, dict):
-        return {k: _serialize(v) for k, v in value.items()}
-    if isinstance(value, list):
-        return [_serialize(v) for v in value]
-    return value
-
-
-def main() -> None:
+def main():
+    # 1) Load splits
     (X_train, y_train), (X_val, y_val), (X_test, y_test) = features.load_splits()
 
-    cv = KFold(n_splits=5, shuffle=True, random_state=0)
-    candidates = _candidates()
-    results: List[ResultDict] = []
-    best_estimators: Dict[str, object] = {}
+    # 2) CV setup
+    cv = KFold(n_splits=CV_SPLITS, shuffle=True, random_state=SEED)
 
+    models = build_models()
+    results = []
+
+    # 3) Tune each model on TRAIN, evaluate on VAL
     with parallel_backend("threading"):
-        for name, (estimator, param_grid) in candidates.items():
-            search = GridSearchCV(
-                estimator,
-                param_grid if param_grid else {},
+        for model_name, (estimator, param_space) in models.items():
+            search = RandomizedSearchCV(
+                estimator=estimator,
+                param_distributions=param_space,
+                n_iter=N_ITER,
                 scoring="r2",
                 cv=cv,
+                random_state=SEED,
                 n_jobs=-1,
             )
             search.fit(X_train, y_train)
-            best = search.best_estimator_
-            best_estimators[name] = best
 
-            val_pred = best.predict(X_val)
-            val_metrics = _metrics(y_val, val_pred)
+            best_model = search.best_estimator_
+            val_pred = best_model.predict(X_val)
+            val_metrics = get_metrics(y_val, val_pred)
 
             results.append(
                 {
-                    "model": name,
-                    "cv_best_score": float(search.best_score_),
-                    "best_params": _serialize(search.best_params_),
-                    "val_metrics": _serialize(val_metrics),
+                    "model": model_name,
+                    "val_metrics": val_metrics,
+                    "best_params": search.best_params_,
+                    "best_estimator": best_model,
                 }
             )
 
-    results_sorted = sorted(results, key=lambda r: r["val_metrics"]["r2"], reverse=True)
-    best_name = results_sorted[0]["model"]
-    best_model = best_estimators[best_name]
+            print(f"{model_name}: VAL R² = {val_metrics['r2']:.4f} | VAL RMSE = {val_metrics['rmse']:.3f}")
 
+    # 4) Pick best model by validation R²
+    best = max(results, key=lambda r: r["val_metrics"]["r2"])
+    best_name = best["model"]
+    best_model = best["best_estimator"]
+
+    # 5) Refit on TRAIN+VAL
     X_trainval = pd.concat([X_train, X_val], axis=0)
     y_trainval = pd.concat([y_train, y_val], axis=0)
     best_model.fit(X_trainval, y_trainval)
 
+    # 6) Test evaluation
     test_pred = best_model.predict(X_test)
-    test_metrics = _metrics(y_test, test_pred)
+    test_metrics = get_metrics(y_test, test_pred)
 
-    root = _project_root()
-    models_dir = root / "data" / "models"
-    models_dir.mkdir(parents=True, exist_ok=True)
+    # 7) Save outputs
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    results_path = models_dir / "model_results.json"
-    with results_path.open("w", encoding="utf-8") as f:
-        json.dump(_serialize(results_sorted), f, indent=2)
+    # Save a clean JSON report
+    report = {
+        "best_model": best_name,
+        "best_params": best["best_params"],
+        "val_metrics_best": best["val_metrics"],
+        "test_metrics": test_metrics,
+        "all_models": [
+            {"model": r["model"], "val_metrics": r["val_metrics"], "best_params": r["best_params"]}
+            for r in results
+        ],
+        "config": {"seed": SEED, "cv_splits": CV_SPLITS, "n_iter": N_ITER},
+    }
+    (OUT_DIR / "results.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
 
-    best_metrics_path = models_dir / "best_model_test_metrics.json"
-    with best_metrics_path.open("w", encoding="utf-8") as f:
-        json.dump(
-            {
-                "best_model": best_name,
-                "test_metrics": _serialize(test_metrics),
-                "best_params": _serialize(results_sorted[0]["best_params"]),
-            },
-            f,
-            indent=2,
-        )
+    # Save test predictions for inspection
+    pd.DataFrame(
+        {"y_true": y_test.values, "y_pred": test_pred, "residual": y_test.values - test_pred}
+    ).to_csv(OUT_DIR / "test_predictions.csv", index=False)
 
-    artifact_path = models_dir / f"{best_name}_model.pkl"
-    with artifact_path.open("wb") as f:
-        pickle.dump(best_model, f)
-
-    print("Model selection complete.")
-    print(f"Results written to: {results_path}")
-    print(f"Best model test metrics: {best_metrics_path}")
-    print(f"Saved best model artifact: {artifact_path}")
-
+    print("\nBest model:", best_name)
+    print("Test metrics:", test_metrics)
 
 if __name__ == "__main__":
     main()
-
