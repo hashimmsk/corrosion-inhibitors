@@ -1,16 +1,4 @@
-# Python
 __pycache__/
 *.py[cod]
-
-# Environment
 .venv/
-
-# OS
 .DS_Store
-
-# Generated data (run scripts to regenerate)
-data/processed/
-data/eda/
-data/feature_importance/
-data/models/
-data/evaluation/
