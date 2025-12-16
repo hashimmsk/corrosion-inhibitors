@@ -1,72 +1,50 @@
-1. Goal:
-   - main goal is to optimize inhibitor structure and dosage in realistic systems
-   - for that we'll develop data-driven ml model to predict the IE (inhibition efficiency) from molecular and operating-condition features
+1. Goal
+   Develop a data-driven ML model to predict IE (inhibition efficiency) from molecular and operating-condition features, enabling optimization of inhibitor structure and dosage.
 
-2. Problem Definition:
-   - input features are C# (carbon number), Mw (molecular weight), HLB (hydrophilic-lipophilic balance), EO (ethylene oxide units), Conc (concentration of inhibitor), pH (potential of hydrogen)
-   - prediction feature is IE (inhibition efficiency)
-   - AA (active agent) is used to rescale the IE
+2. Problem Definition
+   - Input features: C# (carbon number), Mw (molecular weight), HLB (hydrophilic-lipophilic balance), EO (ethylene oxide units), Conc (concentration), pH
+   - Target: IE (inhibition efficiency)
+   - AA (active agent) is used to rescale IE during preprocessing
 
-3. Data Collection & Understanding:
-   - Data consists of ~300 lab samples from corrosion experiments
-   - Each sample includes:
-     - The inhibitor formulation (C#, Mw, HLB, EO, AA)
-     - The test conditions (Conc, pH)
-     - The measured performance (IE)
+3. Data Collection & Understanding
+   - ~300 lab samples from corrosion experiments
+   - Each sample includes inhibitor formulation (C#, Mw, HLB, EO), test conditions (Conc, pH), and measured IE
 
-4. Data Preprocessing & Cleaning:
-   - Implemented a reusable preprocessing pipeline to handle all data loading and cleaning
-   - Removed non-informative columns
-   - Applied the IE correction using the active agent (AA) and then dropped AA
-   - Dropped duplicate rows and rows with missing IE to ensure a clean target
-   - Imputed missing features using mean imputation (fitted on the training data only)
-   - Standardized all input features using StandardScaler (fitted on training data only)
-   - Split the cleaned dataset into train/validation/test (70/15/15) and saved: cleaned_full.csv, train.csv, val.csv, test.csv under data/processed/
-   - Archived the original dataset under data/archive/dataset_original.csv for traceability
-   - Created a constant‑pH variant (dataset.csv, pH fixed to dataset average) for sensitivity analysis
+4. Data Preprocessing (preprocessing.py)
+   - Load raw dataset, remove non-informative columns
+   - Compute IE = IE × AA / 100, then drop AA
+   - Drop duplicates and rows with missing IE
+   - Split into train/val/test (70/15/15)
+   - Fit imputer (mean) and scaler (StandardScaler) on TRAIN only, transform all splits
+   - Outputs in data/processed/: train.csv, val.csv, test.csv, cleaned_full.csv
+   - Archive: data/archive/dataset_original.csv
 
-5. Exploratory Data Analysis (EDA):
-   - Implemented an EDA script that:
-     - Loads the cleaned dataset (cleaned_full.csv or via preprocessing pipeline)
-     - Plots histograms for all features and IE to inspect distributions
-     - Computes and visualizes a Pearson correlation heatmap for C#, Mw, HLB, EO, Conc, pH, IE
-     - Generates scatter plots of IE vs key drivers (Conc, pH, HLB, EO) to see how inhibition efficiency responds to changes in these variables
-   - Centralized all EDA output in data/eda/ for easy review and reporting
+5. Exploratory Data Analysis (eda.py)
+   - Histograms for all features and IE
+   - Pearson correlation heatmap
+   - Scatter plots of IE vs key drivers (Conc, pH, HLB, EO)
+   - Outputs in data/eda/: histograms.png, correlation_heatmap.png, scatter_plots.png
 
-6. Feature Engineering & Selection:
-   - Defined a canonical v1 feature set for modeling: C#, Mw, HLB, EO, Conc, pH with IE as the prediction target
-   - Implemented feature-loading utilities (features.py) to:
-     - Reliably load train/val/test splits from data/processed/
-     - Expose consistent X_train, y_train, X_val, y_val, X_test, y_test only with the canonical features
-   - Ran a baseline feature-importance analysis (feature_importance.py) using:
-     - Linear regression coefficients (absolute, normalized)
-     - Random forest feature importances
-     - Permutation importance on the validation set
-   - Aggregated these into baseline_importance.csv to obtain a consensus ranking of feature importance, confirming:
-     - All six features carry signal for predicting IE
-     - Some variables (e.g., environmental/operating conditions like pH and dosage Conc) appear especially influential, guiding how we prioritize them in subsequent modeling
+6. Feature Engineering & Selection (features.py, feature_importance.py)
+   - Canonical feature set: C#, Mw, HLB, EO, Conc, pH → IE
+   - features.py: loads preprocessed splits, exposes X/y for train/val/test
+   - feature_importance.py: baseline importance via linear regression coefficients, RF importances, permutation importance
+   - Output: data/feature_importance/baseline_importance.csv
 
-7. Model Selection & Training
-   - Implemented training harness (train.py) to load canonical splits, run GridSearchCV on seven model families (linear, ridge, lasso, elastic net, random forest, gradient boosting, SVR), rank by validation R², refit the winner on train+val, and evaluate on the held-out test set
-   - Parallelism switched to threading backend to avoid macOS loky resource-tracker issues; artifacts saved under data/models/
-   - Best model: RandomForestRegressor (n_estimators=200, max_depth=5, min_samples_leaf=1)
-     - Validation: R²=0.675, MAE=16.9, RMSE=21.0
-     - Test: R²=0.449, MAE=14.56, RMSE=19.53
-   - Outputs: model_results.json (all candidates), best_model_test_metrics.json (winner metrics), random_forest_model.pkl (fitted model), report.txt (summary)
+7. Model Selection & Training (train.py)
+   - Load preprocessed splits (already imputed + scaled)
+   - Tune models on TRAIN using RandomizedSearchCV (3-fold CV, 18 iterations)
+   - Evaluate on VAL, pick winner by R²
+   - Refit winner on TRAIN+VAL
+   - Evaluate on TEST
+   - Candidates: RandomForestRegressor, SVR (RBF)
+   - Best: RandomForestRegressor (n_estimators=600, max_depth=6, min_samples_leaf=2)
+     - Val: R²=0.693, RMSE=20.4
+     - Test: R²=0.417, RMSE=20.1
+   - Outputs in data/models/: results.json, test_predictions.csv
 
 8. Model Evaluation & Interpretation
-   - Metrics: primary R²; secondary MAE/RMSE; report confidence intervals via simple bootstrap on val/test where feasible.
-   - Diagnostics to run on the selected model (current: random forest):
-     - Residual analysis: residual vs fitted, residual vs key drivers (Conc, pH) to spot heteroscedasticity or bias.
-     - Learning curves: gauge data sufficiency and variance/overfit balance.
-     - Permutation importance on val/test to confirm driver hierarchy; SHAP (tree SHAP) for local/global explanations.
-     - Partial dependence / ICE for top drivers (pH, Conc, Mw/EO) to visualize response curves.
-   - Stability checks:
-     - Sensitivity to pH (use constant-pH variant) and to dosage range; avoid extrapolation beyond training percentiles.
-     - Cross-validate on train only; keep test strictly held-out for final reporting.
-   - Deliverables:
-     - Plots: residuals, learning curves, permutation/SHAP importance, PDP/ICE for top features.
-     - Summary table of metrics (CV, val, test) and interpretation notes for key drivers.
+   (TODO)
 
 9. Optimization & Design Use-Case
-
+   (TODO)
