@@ -1,0 +1,121 @@
+Phase 1: Initial Exploration (7 Model Families)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+We started by comparing 7 different algorithms:
+- Linear Regression
+- Ridge Regression  
+- Lasso Regression
+- ElasticNet
+- Random Forest
+- Gradient Boosting
+- SVR (Support Vector Regression)
+
+Results (ranked by validation R²):
+
+  Model              | Val R²  | Notes
+  -------------------|---------|----------------------------------
+  Random Forest      |  0.675  | Best performer
+  Gradient Boosting  |  0.216  | Just fine
+  SVR                |  0.522  | Second best
+  Linear Regression  | -0.016  | NEGATIVE R² - worse than baseline
+  Ridge              | -0.019  | NEGATIVE R² - worse than baseline
+  Lasso              | -0.016  | NEGATIVE R² - worse than baseline
+  ElasticNet         | -0.022  | NEGATIVE R² - worse than baseline
+
+KEY FINDING: All linear models produced NEGATIVE R² scores, meaning they
+performed worse than simply predicting the mean IE for every sample. This
+strongly indicates that the relationship between features and IE is
+NON-LINEAR - which makes physical sense given the complex chemistry of
+corrosion inhibition.
+
+
+Phase 2: Focused Model Set
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+Based on Phase 1 results, we dropped all linear models and focused on:
+- Random Forest (best overall)
+- SVR with RBF kernel (captures non-linearity)
+
+We also simplified the training script for clarity and faster iteration.
+
+
+Phase 3: Current Implementation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Workflow:
+1. Load preprocessed train/val/test splits
+2. Tune each model on TRAIN using RandomizedSearchCV (3-fold CV, 18 iterations)
+3. Evaluate tuned models on VAL, pick winner by R²
+4. Refit winner on TRAIN+VAL combined
+5. Final evaluation on held-out TEST set
+
+Hyperparameter Search Spaces:
+
+  Random Forest:
+    - n_estimators: [300, 600]
+    - max_depth: [None, 6, 10]
+    - min_samples_leaf: [1, 2, 4]
+
+  SVR (RBF kernel):
+    - C: [10.0, 50.0, 100.0]
+    - gamma: ["scale", 0.1, 0.01]
+    - epsilon: [0.01, 0.05, 0.1]
+
+
+FINAL RESULTS
+-------------
+Model Comparison:
+
+  Model         | Val R²  | Val RMSE
+  --------------|---------|----------
+  Random Forest | 0.693   | 20.4
+  SVR           | 0.556   | 24.6
+
+Winner: Random Forest
+
+Best Hyperparameters:
+  - n_estimators: 600
+  - max_depth: 6
+  - min_samples_leaf: 2
+
+Test Set Performance (held-out, never seen during training/tuning):
+  - R²:   0.417
+  - MAE:  15.2
+  - RMSE: 20.1
+
+
+INTERPRETATION
+--------------
+What does R² = 0.417 mean?
+- The model explains ~42% of the variance in IE on unseen data
+- This is moderate predictive power - useful for screening, but not precise
+
+Why is Test R² lower than Validation R²?
+- Normal and expected behavior
+- Test set is completely held out (no leakage during any tuning decisions)
+- Small dataset (~45 test samples) means more variability
+- Some overfitting to training distribution is inevitable
+
+Why did Random Forest win?
+- Handles non-linear relationships well (chemistry is rarely linear)
+- Robust to outliers and noise
+- Captures feature interactions naturally
+- Works well on small-to-medium tabular datasets
+
+Why did linear models fail?
+- They assume a straight-line relationship between features and IE
+- Real chemistry involves complex, non-linear interactions
+- Negative R² means they're worse than just predicting the average
+
+
+POTENTIAL IMPROVEMENTS
+----------------------
+1. Feature Engineering:
+   - Add interaction terms (e.g., Conc × pH)
+   - Polynomial features for key drivers
+
+2. More Data:
+   - Additional samples, especially at extreme conditions
+   - More features (temperature, exposure time, flow rate)
+
+3. Model Enhancements:
+   - Try XGBoost or LightGBM
+   - Ensemble multiple models
+   - Bayesian optimization for hyperparameters
