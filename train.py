@@ -113,10 +113,19 @@ def main():
     }
     (OUT_DIR / "results.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
 
-    # Save test predictions for inspection
-    pd.DataFrame(
-        {"y_true": y_test.values, "y_pred": test_pred, "residual": y_test.values - test_pred}
-    ).to_csv(OUT_DIR / "test_predictions.csv", index=False)
+    # Save test predictions for inspection (include pH and medium for analysis)
+    pred_df = pd.DataFrame({
+        "y_true": y_test.values,
+        "y_pred": test_pred,
+        "residual": y_test.values - test_pred,
+    })
+    
+    # Add original pH and medium from test metadata
+    test_meta = features.load_test_metadata()
+    for col in test_meta.columns:
+        pred_df[col] = test_meta[col].values
+    
+    pred_df.to_csv(OUT_DIR / "test_predictions.csv", index=False)
 
     print("\nBest model:", best_name)
     print("Test metrics:", test_metrics)

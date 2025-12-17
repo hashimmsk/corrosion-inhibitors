@@ -51,9 +51,20 @@ def ensure_processed_splits(root: Path) -> Dict[str, pd.DataFrame]:
 
   processed_dir.mkdir(parents=True, exist_ok=True)
 
+  cleaned_df = processed["cleaned_df"]
+  
   for split_name, split_data in processed["splits"].items():
     df = split_data["X_scaled"].copy()
     df[LABEL_COLUMN] = split_data["y"]
+    
+    # Add original (unscaled) pH for interpretability
+    df["pH_original"] = split_data["X_raw"]["pH"].values
+    
+    # Add medium if it exists in the original data
+    if "medium" in cleaned_df.columns:
+      indices = split_data["X_raw"].index
+      df["medium"] = cleaned_df.loc[indices, "medium"].values
+    
     output_path = processed_dir / f"{split_name}.csv"
     df.to_csv(output_path, index=False)
 
@@ -78,6 +89,18 @@ def load_splits() -> Tuple[Split, Split, Split]:
     return X, y
 
   return extract(splits["train"]), extract(splits["val"]), extract(splits["test"])
+
+
+def load_test_metadata() -> pd.DataFrame:
+  """Load pH_original and medium for test set (for prediction analysis)."""
+  root = _project_root()
+  test_df = pd.read_csv(_processed_dir(root) / "test.csv")
+  cols = []
+  if "pH_original" in test_df.columns:
+    cols.append("pH_original")
+  if "medium" in test_df.columns:
+    cols.append("medium")
+  return test_df[cols] if cols else pd.DataFrame()
 
 
 def load_full_dataset() -> pd.DataFrame:
