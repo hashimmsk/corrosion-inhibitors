@@ -1,0 +1,68 @@
+======================================================================
+MEDIUM-SPECIFIC MODEL TRAINING: NaCl
+======================================================================
+
+DATASET INFORMATION
+----------------------------------------------------------------------
+Medium: NaCl
+Train samples: 82
+Val samples: 18
+Test samples: 18
+Features: C#, Mw, HLB, EO, Conc, pH
+Target: IE (Inhibition Efficiency %)
+
+TRAINING APPROACH
+----------------------------------------------------------------------
+1. Load medium-specific train/val/test splits
+2. Tune Random Forest and SVR on TRAIN using RandomizedSearchCV
+   (3-fold CV, 18 iterations)
+3. Evaluate tuned models on VAL, pick winner by R²
+4. Refit winner on TRAIN+VAL combined
+5. Final evaluation on held-out TEST set
+
+HYPERPARAMETER SEARCH SPACES
+----------------------------------------------------------------------
+Random Forest:
+  - n_estimators: [300, 600]
+  - max_depth: [None, 6, 10]
+  - min_samples_leaf: [1, 2, 4]
+
+SVR (RBF kernel):
+  - C: [10.0, 50.0, 100.0]
+  - gamma: ['scale', 0.1, 0.01]
+  - epsilon: [0.01, 0.05, 0.1]
+
+MODEL COMPARISON (VALIDATION SET)
+----------------------------------------------------------------------
+Model                | Val R²     | Val MAE    | Val RMSE  
+----------------------------------------------------------------------
+random_forest        | 0.025      | 15.81      | 19.78     
+svr                  | -0.021     | 15.25      | 20.25     
+
+Winner: random_forest
+
+BEST HYPERPARAMETERS
+----------------------------------------------------------------------
+  n_estimators: 600
+  min_samples_leaf: 4
+  max_depth: None
+
+TEST SET PERFORMANCE (HELD-OUT)
+----------------------------------------------------------------------
+R²:   0.205
+MAE:  15.28
+RMSE: 18.77
+
+INTERPRETATION
+----------------------------------------------------------------------
+The random_forest model explains 20.5% of the variance
+in IE for NaCl medium on unseen test data.
+
+COMPARISON WITH GENERAL MODEL
+----------------------------------------------------------------------
+Compare this result with the general model (data/models/results.json)
+to determine if medium-specific models provide better performance.
+
+Key question: Does specializing by medium improve predictions?
+- If YES → Deploy separate models for each medium
+- If NO  → Use the general model (simpler deployment)

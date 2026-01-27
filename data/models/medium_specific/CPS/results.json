@@ -1,0 +1,57 @@
+{
+  "medium": "CPS",
+  "best_model": "random_forest",
+  "best_params": {
+    "n_estimators": 600,
+    "min_samples_leaf": 1,
+    "max_depth": 10
+  },
+  "val_metrics_best": {
+    "r2": 0.35495132917998695,
+    "mae": 16.312240156944412,
+    "rmse": 21.79529144650615
+  },
+  "test_metrics": {
+    "r2": -0.44790487962419245,
+    "mae": 26.193437444791694,
+    "rmse": 30.804893367777517
+  },
+  "all_models": [
+    {
+      "model": "random_forest",
+      "val_metrics": {
+        "r2": 0.35495132917998695,
+        "mae": 16.312240156944412,
+        "rmse": 21.79529144650615
+      },
+      "best_params": {
+        "n_estimators": 600,
+        "min_samples_leaf": 1,
+        "max_depth": 10
+      }
+    },
+    {
+      "model": "svr",
+      "val_metrics": {
+        "r2": 0.2548868805910586,
+        "mae": 18.50364858004634,
+        "rmse": 23.424889102799412
+      },
+      "best_params": {
+        "gamma": 0.1,
+        "epsilon": 0.01,
+        "C": 10.0
+      }
+    }
+  ],
+  "config": {
+    "seed": 0,
+    "cv_splits": 3,
+    "n_iter": 18
+  },
+  "dataset_sizes": {
+    "train": 37,
+    "val": 8,
+    "test": 8
+  }
+}

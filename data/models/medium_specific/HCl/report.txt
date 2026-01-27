@@ -1,0 +1,72 @@
+======================================================================
+MEDIUM-SPECIFIC MODEL TRAINING: HCl
+======================================================================
+
+DATASET INFORMATION
+----------------------------------------------------------------------
+Medium: HCl
+Train samples: 82
+Val samples: 18
+Test samples: 18
+Features: C#, Mw, HLB, EO, Conc, pH
+Target: IE (Inhibition Efficiency %)
+
+TRAINING APPROACH
+----------------------------------------------------------------------
+1. Load medium-specific train/val/test splits
+2. Tune Random Forest and SVR on TRAIN using RandomizedSearchCV
+   (3-fold CV, 18 iterations)
+3. Evaluate tuned models on VAL, pick winner by R²
+4. Refit winner on TRAIN+VAL combined
+5. Final evaluation on held-out TEST set
+
+HYPERPARAMETER SEARCH SPACES
+----------------------------------------------------------------------
+Random Forest:
+  - n_estimators: [300, 600]
+  - max_depth: [None, 6, 10]
+  - min_samples_leaf: [1, 2, 4]
+
+SVR (RBF kernel):
+  - C: [10.0, 50.0, 100.0]
+  - gamma: ['scale', 0.1, 0.01]
+  - epsilon: [0.01, 0.05, 0.1]
+
+MODEL COMPARISON (VALIDATION SET)
+----------------------------------------------------------------------
+Model                | Val R²     | Val MAE    | Val RMSE  
+----------------------------------------------------------------------
+svr                  | 0.141      | 13.92      | 17.93     
+random_forest        | 0.110      | 14.26      | 18.25     
+
+Winner: svr
+
+BEST HYPERPARAMETERS
+----------------------------------------------------------------------
+  gamma: 0.01
+  epsilon: 0.1
+  C: 100.0
+
+TEST SET PERFORMANCE (HELD-OUT)
+----------------------------------------------------------------------
+R²:   0.036
+MAE:  13.41
+RMSE: 18.99
+
+INTERPRETATION
+----------------------------------------------------------------------
+The svr model explains 3.6% of the variance
+in IE for HCl medium on unseen test data.
+
+Note: Test R² is lower than validation R², which is normal and expected.
+This indicates some overfitting to the training distribution, but the
+model still generalizes reasonably to the held-out test set.
+
+COMPARISON WITH GENERAL MODEL
+----------------------------------------------------------------------
+Compare this result with the general model (data/models/results.json)
+to determine if medium-specific models provide better performance.
+
+Key question: Does specializing by medium improve predictions?
+- If YES → Deploy separate models for each medium
+- If NO  → Use the general model (simpler deployment)

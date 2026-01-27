@@ -1,0 +1,57 @@
+{
+  "medium": "NaCl",
+  "best_model": "random_forest",
+  "best_params": {
+    "n_estimators": 600,
+    "min_samples_leaf": 4,
+    "max_depth": null
+  },
+  "val_metrics_best": {
+    "r2": 0.025446036728643207,
+    "mae": 15.80830648504419,
+    "rmse": 19.784489082387758
+  },
+  "test_metrics": {
+    "r2": 0.20450918269657747,
+    "mae": 15.280949410675378,
+    "rmse": 18.765091609525676
+  },
+  "all_models": [
+    {
+      "model": "random_forest",
+      "val_metrics": {
+        "r2": 0.025446036728643207,
+        "mae": 15.80830648504419,
+        "rmse": 19.784489082387758
+      },
+      "best_params": {
+        "n_estimators": 600,
+        "min_samples_leaf": 4,
+        "max_depth": null
+      }
+    },
+    {
+      "model": "svr",
+      "val_metrics": {
+        "r2": -0.021241327103523666,
+        "mae": 15.253604451780335,
+        "rmse": 20.252847105970545
+      },
+      "best_params": {
+        "gamma": 0.01,
+        "epsilon": 0.01,
+        "C": 100.0
+      }
+    }
+  ],
+  "config": {
+    "seed": 0,
+    "cv_splits": 3,
+    "n_iter": 18
+  },
+  "dataset_sizes": {
+    "train": 82,
+    "val": 18,
+    "test": 18
+  }
+}
