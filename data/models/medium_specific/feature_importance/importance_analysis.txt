@@ -1,0 +1,75 @@
+======================================================================
+FEATURE IMPORTANCE COMPARISON
+======================================================================
+
+HOW TO READ THIS TABLE:
+----------------------------------------------------------------------
+Values represent normalized feature importance (0-1 scale).
+Higher values = more important for predicting IE.
+
+IMPORTANCE COMPARISON TABLE
+----------------------------------------------------------------------
+       General       HCl      NaCl       CPS
+C#    0.112737  0.082460  0.427539  0.078301
+Mw    0.091573  0.069024  0.070204  0.341566
+HLB   0.148674  0.034580  0.108756  0.411618
+EO    0.073515  0.057483  0.034270  0.168515
+Conc  0.216077  0.756453  0.359230  0.000000
+pH    0.357424  0.000000  0.000000  0.000000
+
+TOP 3 FEATURES PER MODEL
+----------------------------------------------------------------------
+
+General:
+  1. pH     (0.357)
+  2. Conc   (0.216)
+  3. HLB    (0.149)
+
+HCl:
+  1. Conc   (0.756)
+  2. C#     (0.082)
+  3. Mw     (0.069)
+
+NaCl:
+  1. C#     (0.428)
+  2. Conc   (0.359)
+  3. HLB    (0.109)
+
+CPS:
+  1. HLB    (0.412)
+  2. Mw     (0.342)
+  3. EO     (0.169)
+
+
+KEY INSIGHTS
+======================================================================
+
+1. pH IMPORTANCE COLLAPSE:
+   General Model:   pH = 0.357 (DOMINANT!)
+   HCl Model:       pH = 0.000 (dropped 100%)
+   NaCl Model:      pH = 0.000 (dropped 100%)
+   CPS Model:       pH = 0.000 (dropped 100%)
+
+   → pH was critical in general model because it captured WHICH MEDIUM
+   → In medium-specific models, pH is constant → importance drops to near zero
+
+2. WHAT DRIVES IE IN EACH MEDIUM:
+
+   HCl:
+     Most important: Conc (0.756)
+     In general model: 0.216 (Δ = +0.540)
+
+   NaCl:
+     Most important: C# (0.428)
+     In general model: 0.113 (Δ = +0.315)
+
+   CPS:
+     Most important: HLB (0.412)
+     In general model: 0.149 (Δ = +0.263)
+
+
+3. WHY MEDIUM-SPECIFIC MODELS FAILED:
+   - Loss of pH feature (was 0.811 importance in general model)
+   - Small sample sizes (HCl/NaCl: 100, CPS: 45)
+   - Remaining features have weak correlations with IE
+   - Result: Poor predictive power (Test R² << General Model)
