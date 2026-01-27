@@ -1,0 +1,65 @@
+================================================================================
+MEDIUM-SPECIFIC COMPARISON SUMMARY
+================================================================================
+
+KEY OBSERVATIONS:
+--------------------------------------------------------------------------------
+
+1. SAMPLE DISTRIBUTION:
+   HCl   : 118 samples
+   NaCl  : 118 samples
+   CPS   :  53 samples
+
+2. INHIBITION EFFICIENCY (IE) STATISTICS:
+   Medium     Mean       Std        Min        Max       
+   --------------------------------------------------
+   HCl           63.52%     22.16%      5.72%     93.62%
+   NaCl          22.13%     25.51%    -35.74%     95.12%
+   CPS           52.74%     31.91%    -51.40%     94.04%
+
+3. pH VALUES (Constant within each medium):
+   HCl   : pH = 0.5
+   NaCl  : pH = 4.9
+   CPS   : pH = 12.5
+
+4. CONCENTRATION RANGES:
+   HCl   : 0.005 - 0.050 mM (mean: 0.027 mM)
+   NaCl  : 0.050 - 0.500 mM (mean: 0.275 mM)
+   CPS   : 0.100 - 0.100 mM (mean: 0.100 mM)
+
+5. FEATURE CORRELATIONS WITH IE:
+   Feature   HCl         NaCl        CPS         
+   ----------------------------------------------
+   C#        +0.142      +0.359      -0.035      
+   Mw        +0.063      +0.045      -0.152      
+   HLB       +0.023      +0.096      -0.394      
+   EO        +0.054      +0.084      -0.336      
+   Conc      +0.387      +0.490      +0.000      
+
+================================================================================
+INSIGHTS FOR MODEL TRAINING:
+================================================================================
+
+• HCl (Acidic, pH 0.5):
+  - Highest mean IE (63.5%)
+  - Strongest correlation: Concentration (+0.387)
+  - pH is constant → will not be a predictive feature
+
+• NaCl (Neutral, pH 4.9):
+  - Lowest mean IE (22.1%) with high variance
+  - Strongest correlations: Concentration (+0.490), C# (+0.359)
+  - More challenging environment for inhibition
+
+• CPS (Alkaline, pH 12.5):
+  - Smallest dataset (53 samples)
+  - NEGATIVE correlations for HLB (-0.394) and EO (-0.336)
+  - Different chemistry: features that help in acid may hurt in alkaline
+
+EXPECTED MODELING OUTCOMES:
+--------------------------------------------------------------------------------
+• pH importance will DROP to near zero in medium-specific models
+• HCl models: likely best performance (most samples, highest IE)
+• NaCl models: moderate performance (high variance in IE)
+• CPS models: potentially weakest (smallest dataset, different chemistry)
+• Feature importance will vary significantly across mediums
+

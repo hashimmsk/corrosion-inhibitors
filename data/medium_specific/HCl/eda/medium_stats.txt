@@ -1,0 +1,73 @@
+======================================================================
+MEDIUM-SPECIFIC EDA: HCl
+======================================================================
+
+DATASET OVERVIEW
+----------------------------------------------------------------------
+Total samples (raw): 118
+Total samples (cleaned): 118
+Train samples: 82
+Val samples: 18
+Test samples: 18
+
+INHIBITION EFFICIENCY (IE) STATISTICS
+----------------------------------------------------------------------
+Mean IE: 63.52%
+Std Dev: 22.16%
+Min IE: 5.72%
+Max IE: 93.62%
+Median IE: 70.31%
+
+pH DISTRIBUTION
+----------------------------------------------------------------------
+pH 0.5: 118 samples (100.0%)
+Mean pH: 0.50
+
+FEATURE STATISTICS (Cleaned Data)
+----------------------------------------------------------------------
+
+C#:
+  Mean: 11.74
+  Std:  12.82
+  Min:  0.00
+  Max:  55.00
+
+Mw:
+  Mean: 2638.18
+  Std:  3191.34
+  Min:  62.00
+  Max:  14600.00
+
+HLB:
+  Mean: 12.37
+  Std:  5.64
+  Min:  1.00
+  Max:  24.00
+
+EO:
+  Mean: 37.45
+  Std:  60.76
+  Min:  0.00
+  Max:  272.00
+
+Conc:
+  Mean: 0.03
+  Std:  0.02
+  Min:  0.01
+  Max:  0.05
+
+pH:
+  Mean: 0.50
+  Std:  0.00
+  Min:  0.50
+  Max:  0.50
+
+
+CORRELATION WITH IE (Inhibition Efficiency)
+----------------------------------------------------------------------
+C#        : +0.142
+Mw        : +0.063
+HLB       : +0.023
+EO        : +0.054
+Conc      : +0.387
+pH        : +nan

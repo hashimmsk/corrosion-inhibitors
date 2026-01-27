@@ -1,0 +1,73 @@
+======================================================================
+MEDIUM-SPECIFIC EDA: CPS
+======================================================================
+
+DATASET OVERVIEW
+----------------------------------------------------------------------
+Total samples (raw): 53
+Total samples (cleaned): 53
+Train samples: 37
+Val samples: 8
+Test samples: 8
+
+INHIBITION EFFICIENCY (IE) STATISTICS
+----------------------------------------------------------------------
+Mean IE: 52.74%
+Std Dev: 31.91%
+Min IE: -51.40%
+Max IE: 94.04%
+Median IE: 56.76%
+
+pH DISTRIBUTION
+----------------------------------------------------------------------
+pH 12.5: 53 samples (100.0%)
+Mean pH: 12.50
+
+FEATURE STATISTICS (Cleaned Data)
+----------------------------------------------------------------------
+
+C#:
+  Mean: 12.09
+  Std:  13.46
+  Min:  0.00
+  Max:  55.00
+
+Mw:
+  Mean: 2740.74
+  Std:  3236.31
+  Min:  244.05
+  Max:  14600.00
+
+HLB:
+  Mean: 12.48
+  Std:  5.75
+  Min:  1.00
+  Max:  24.00
+
+EO:
+  Mean: 39.24
+  Std:  62.25
+  Min:  0.00
+  Max:  272.00
+
+Conc:
+  Mean: 0.10
+  Std:  0.00
+  Min:  0.10
+  Max:  0.10
+
+pH:
+  Mean: 12.50
+  Std:  0.00
+  Min:  12.50
+  Max:  12.50
+
+
+CORRELATION WITH IE (Inhibition Efficiency)
+----------------------------------------------------------------------
+C#        : -0.035
+Mw        : -0.152
+HLB       : -0.394
+EO        : -0.336
+Conc      : -0.000
+pH        : +nan
