@@ -32,13 +32,13 @@ Predict corrosion inhibitor performance (inhibition efficiency, **IE**) from mol
 | SVR (RBF) | 0.555 | — |
 
 ### Medium-Specific Models
-| Medium | Model | Val R² | Test R² |
-|--------|-------|--------|---------|
-| HCl | Random Forest | 0.863 | 0.699 |
-| NaCl | Random Forest | 0.839 | 0.789 |
-| CPS | Random Forest | 0.842 | 0.763 |
+| Medium | Best Model | Val R² | Test R² |
+|--------|------------|--------|---------|
+| HCl | SVR | 0.141 | 0.036 |
+| NaCl | Random Forest | 0.025 | 0.204 |
+| CPS | Random Forest | 0.355 | -0.448 |
 
-**Key Finding:** Medium-specific models significantly outperform the general model, with test R² improving from 0.417 to 0.699-0.789.
+**Key Finding:** Medium-specific models underperformed the general model due to very small dataset sizes per medium (train: 37-82, test: 8-18 samples). The general model benefits from cross-medium learning.
 
 ## Repository Layout
 

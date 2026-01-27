@@ -58,10 +58,11 @@
        - Train separate RF and SVR models for each medium
        - Use same hyperparameter tuning strategy per medium
        - Compare performance vs. general model
-       - Results:
-         * HCl RF: Val R²=0.863, Test R²=0.699 (vs. 0.417 general)
-         * NaCl RF: Val R²=0.839, Test R²=0.789 (vs. 0.417 general)
-         * CPS RF: Val R²=0.842, Test R²=0.763 (vs. 0.417 general)
+       - Results (underperformed due to small sample sizes):
+         * HCl: Test R²=0.036 (vs. 0.417 general) - 118 samples total
+         * NaCl: Test R²=0.204 (vs. 0.417 general) - 118 samples total
+         * CPS: Test R²=-0.448 (vs. 0.417 general) - 53 samples total
+       - Conclusion: General model benefits from cross-medium learning
        - Outputs in data/models/medium_specific/{medium}/
        
    7b. Feature Importance Analysis (analyze_feature_importance.py)
