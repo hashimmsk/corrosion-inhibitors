@@ -49,7 +49,7 @@ def load_general_model_data():
 
 def load_medium_data(medium_name):
     """Load medium-specific train/val data."""
-    medium_dir = DATA_DIR / "medium_specific" / medium_name / "processed"
+    medium_dir = DATA_DIR / "processed" / "medium_specific" / medium_name
     
     train_df = pd.read_csv(medium_dir / "train.csv")
     val_df = pd.read_csv(medium_dir / "val.csv")

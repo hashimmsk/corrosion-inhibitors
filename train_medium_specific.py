@@ -41,7 +41,7 @@ N_ITER = 18
 MEDIUMS = ["HCl", "NaCl", "CPS"]
 
 PROJECT_ROOT = Path(__file__).parent
-DATA_DIR = PROJECT_ROOT / "data" / "medium_specific"
+DATA_DIR = PROJECT_ROOT / "data" / "processed" / "medium_specific"
 OUTPUT_BASE = PROJECT_ROOT / "data" / "models" / "medium_specific"
 
 FEATURE_COLUMNS = ["C#", "Mw", "HLB", "EO", "Conc", "pH"]

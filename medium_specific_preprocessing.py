@@ -31,7 +31,7 @@ from preprocessing import PreprocessingConfig, clean_dataset, preprocess_dataset
 # Project paths
 PROJECT_ROOT = Path(__file__).parent
 DATASET_PATH = PROJECT_ROOT / "dataset.csv"
-OUTPUT_BASE = PROJECT_ROOT / "data" / "medium_specific"
+OUTPUT_BASE = PROJECT_ROOT / "data" / "processed" / "medium_specific"
 
 MEDIUMS = ["HCl", "NaCl", "CPS"]
 
