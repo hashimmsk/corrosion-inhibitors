@@ -1,4 +1,12 @@
 __pycache__/
 *.py[cod]
+
 .venv/
+
 .DS_Store
+
+data/processed/
+data/models/
+data/eda/
+
+data/viz_figures/*.mp4

@@ -16,34 +16,63 @@ Predict corrosion inhibitor performance (inhibition efficiency, **IE**) from mol
 | 1-4 | `preprocessing.py` | Data cleaning, IE correction, train/val/test split | ✅ |
 | 5 | `eda.py` | Histograms, correlation heatmap, scatter plots | ✅ |
 | 6 | `features.py`, `feature_importance.py` | Feature loading & baseline importance | ✅ |
-| 7 | `train.py` | Model selection & training | ✅ |
+| 7 | `train.py` | Model selection & training (general model) | ✅ |
+| 7a | `medium_specific_preprocessing.py` | Split by medium & preprocess separately | ✅ |
+| 7b | `train_medium_specific.py` | Train models for each medium (HCl, NaCl, CPS) | ✅ |
+| 7c | `analyze_feature_importance.py` | Compare feature importance across mediums | ✅ |
 | 8 | — | Model evaluation & interpretation | 🔲 |
 | 9 | — | Optimization & design use-case | 🔲 |
 
 ## Key Results
 
+### General Model (All Mediums Combined)
 | Model | Val R² | Test R² |
 |-------|--------|---------|
 | **Random Forest** | **0.693** | **0.417** |
 | SVR (RBF) | 0.555 | — |
 
+### Medium-Specific Models
+| Medium | Model | Val R² | Test R² |
+|--------|-------|--------|---------|
+| HCl | Random Forest | 0.863 | 0.699 |
+| NaCl | Random Forest | 0.839 | 0.789 |
+| CPS | Random Forest | 0.842 | 0.763 |
+
+**Key Finding:** Medium-specific models significantly outperform the general model, with test R² improving from 0.417 to 0.699-0.789.
+
 ## Repository Layout
 
 ```
-├── preprocessing.py          # Data cleaning & split pipeline
-├── eda.py                    # Exploratory plots
-├── features.py               # Canonical feature loader
-├── feature_importance.py     # Baseline importance analysis
-├── train.py                  # Model selection & training
-├── dataset.csv               # Raw dataset
-├── plan.txt                  # Project roadmap
+├── preprocessing.py                    # Data cleaning & split pipeline
+├── medium_specific_preprocessing.py    # Split by medium & preprocess
+├── eda.py                              # Exploratory plots
+├── features.py                         # Canonical feature loader
+├── feature_importance.py               # Baseline importance analysis
+├── train.py                            # General model training
+├── train_medium_specific.py            # Medium-specific model training
+├── analyze_feature_importance.py       # Feature importance comparison
+├── generate_viz_figures.py             # Publication-quality figures
+├── dataset.csv                         # Raw dataset
+├── plan.txt                            # Project roadmap
 ├── data/
-│   ├── processed/            # train.csv, val.csv, test.csv, cleaned_full.csv
-│   ├── eda/                  # histograms.png, correlation_heatmap.png, scatter_plots.png
-│   ├── feature_importance/   # baseline_importance.csv
-│   ├── models/               # results.json, test_predictions.csv
-│   └── archive/              # Original dataset backup
-└── contextual papers/        # Reference literature
+│   ├── processed/
+│   │   ├── train.csv, val.csv, test.csv, cleaned_full.csv  # General splits
+│   │   └── medium_specific/
+│   │       ├── HCl/                    # HCl-specific data
+│   │       ├── NaCl/                   # NaCl-specific data
+│   │       └── CPS/                    # CPS-specific data
+│   ├── models/
+│   │   ├── results.json, test_predictions.csv  # General model
+│   │   └── medium_specific/
+│   │       ├── HCl/                    # HCl model results
+│   │       ├── NaCl/                   # NaCl model results
+│   │       ├── CPS/                    # CPS model results
+│   │       └── feature_importance/     # Cross-medium analysis
+│   ├── eda/                            # EDA plots
+│   ├── feature_importance/             # Baseline importance
+│   ├── viz_figures/                    # Publication figures
+│   └── archive/                        # Original dataset backup
+└── contextual papers/                  # Reference literature
 ```
 
 ## Usage
@@ -54,11 +83,19 @@ python -m venv .venv
 source .venv/bin/activate
 pip install pandas numpy scikit-learn matplotlib seaborn joblib
 
-# Run pipeline
-python preprocessing.py       # 1. Preprocess data
-python eda.py                 # 2. Generate EDA figures
-python feature_importance.py  # 3. Compute feature importances
-python train.py               # 4. Train and select best model
+# General Pipeline
+python preprocessing.py                 # 1. Preprocess data
+python eda.py                           # 2. Generate EDA figures
+python feature_importance.py            # 3. Compute feature importances
+python train.py                         # 4. Train general model
+
+# Medium-Specific Pipeline
+python medium_specific_preprocessing.py  # 5. Split by medium & preprocess
+python train_medium_specific.py          # 6. Train medium-specific models
+python analyze_feature_importance.py     # 7. Compare feature importance
+
+# Generate Figures
+python generate_viz_figures.py           # 8. Create publication figures
 ```
 
 ## Features

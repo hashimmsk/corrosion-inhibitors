@@ -9,6 +9,17 @@
 3. Data Collection & Understanding
    - ~300 lab samples from corrosion experiments
    - Each sample includes inhibitor formulation (C#, Mw, HLB, EO), test conditions (Conc, pH), and measured IE
+   - Three corrosive mediums tested:
+     * HCl (Acidic, pH 0.5): 160 samples
+     * NaCl (Neutral/Saline, pH 4.9): 74 samples  
+     * CPS (Cement Pore Solution, Alkaline, pH 12.5): 61 samples
+   
+   3a. Medium-Specific Preprocessing (medium_specific_preprocessing.py)
+       - Split dataset by corrosive medium (HCl, NaCl, CPS)
+       - Apply independent preprocessing to each subset
+       - Generate separate train/val/test splits per medium (70/15/15)
+       - Outputs in data/processed/medium_specific/{medium}/
+       - Purpose: Enable comparison of general vs. medium-specific models
 
 4. Data Preprocessing (preprocessing.py)
    - Load raw dataset, remove non-informative columns
@@ -42,6 +53,24 @@
      - Val: R²=0.693, RMSE=20.4
      - Test: R²=0.417, RMSE=20.1
    - Outputs in data/models/: results.json, test_predictions.csv
+   
+   7a. Medium-Specific Model Training (train_medium_specific.py)
+       - Train separate RF and SVR models for each medium
+       - Use same hyperparameter tuning strategy per medium
+       - Compare performance vs. general model
+       - Results:
+         * HCl RF: Val R²=0.863, Test R²=0.699 (vs. 0.417 general)
+         * NaCl RF: Val R²=0.839, Test R²=0.789 (vs. 0.417 general)
+         * CPS RF: Val R²=0.842, Test R²=0.763 (vs. 0.417 general)
+       - Outputs in data/models/medium_specific/{medium}/
+       
+   7b. Feature Importance Analysis (analyze_feature_importance.py)
+       - Compare feature importance across mediums
+       - Analyze how pH importance varies by environment
+       - Generate comparative visualizations
+       - Key finding: pH is most important in general model (0.811),
+         but drops significantly in medium-specific models where pH is constant
+       - Outputs in data/models/medium_specific/feature_importance/
 
 8. Model Evaluation & Interpretation
    (TODO)
