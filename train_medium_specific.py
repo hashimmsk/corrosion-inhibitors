@@ -81,7 +81,7 @@ def build_models():
 
 def load_medium_splits(medium_name):
     """Load train/val/test splits for a specific medium."""
-    medium_dir = DATA_DIR / medium_name / "processed"
+    medium_dir = DATA_DIR / medium_name
     
     train_df = pd.read_csv(medium_dir / "train.csv")
     val_df = pd.read_csv(medium_dir / "val.csv")
@@ -147,29 +147,31 @@ def train_medium_models(medium_name):
             
             print(f"  Val R² = {val_metrics['r2']:.4f} | Val RMSE = {val_metrics['rmse']:.3f}")
     
+    # Refit ALL models on TRAIN+VAL and evaluate on TEST
+    X_trainval = pd.concat([X_train, X_val], axis=0)
+    y_trainval = pd.concat([y_train, y_val], axis=0)
+    
+    print("\nRefitting all models on TRAIN+VAL and evaluating on TEST...")
+    for r in results:
+        model = r["best_estimator"]
+        model.fit(X_trainval, y_trainval)
+        test_pred = model.predict(X_test)
+        r["test_metrics"] = get_metrics(y_test, test_pred)
+        r["test_predictions"] = test_pred
+        print(f"  {r['model']}: TEST R² = {r['test_metrics']['r2']:.4f} | TEST RMSE = {r['test_metrics']['rmse']:.3f}")
+    
     # Pick best model by validation R²
     best = max(results, key=lambda r: r["val_metrics"]["r2"])
     best_name = best["model"]
-    best_model = best["best_estimator"]
+    test_metrics = best["test_metrics"]
     
     print(f"\nBest model: {best_name}")
-    
-    # Refit on TRAIN+VAL
-    X_trainval = pd.concat([X_train, X_val], axis=0)
-    y_trainval = pd.concat([y_train, y_val], axis=0)
-    best_model.fit(X_trainval, y_trainval)
-    
-    # Test evaluation
-    test_pred = best_model.predict(X_test)
-    test_metrics = get_metrics(y_test, test_pred)
-    
-    print(f"Test R² = {test_metrics['r2']:.4f} | Test RMSE = {test_metrics['rmse']:.3f}")
     
     # Save outputs
     output_dir = OUTPUT_BASE / medium_name
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    # 1. Save results.json
+    # 1. Save results.json with test metrics for ALL models
     report_json = {
         "medium": medium_name,
         "best_model": best_name,
@@ -180,6 +182,7 @@ def train_medium_models(medium_name):
             {
                 "model": r["model"],
                 "val_metrics": r["val_metrics"],
+                "test_metrics": r["test_metrics"],
                 "best_params": r["best_params"],
             }
             for r in results
@@ -199,15 +202,15 @@ def train_medium_models(medium_name):
     with open(output_dir / "results.json", "w") as f:
         json.dump(report_json, f, indent=2)
     
-    # 2. Save test_predictions.csv
+    # 2. Save test_predictions.csv (for best model)
     pred_df = pd.DataFrame({
         "y_true": y_test.values,
-        "y_pred": test_pred,
-        "residual": y_test.values - test_pred,
+        "y_pred": best["test_predictions"],
+        "residual": y_test.values - best["test_predictions"],
     })
     
     # Add pH_original and medium if available
-    test_df = pd.read_csv(DATA_DIR / medium_name / "processed" / "test.csv")
+    test_df = pd.read_csv(DATA_DIR / medium_name / "test.csv")
     if "pH_original" in test_df.columns:
         pred_df["pH_original"] = test_df["pH_original"].values
     if "medium" in test_df.columns:
@@ -262,7 +265,7 @@ def save_report(report_path, medium_name, results, best, test_metrics, X_train, 
         f.write("  - gamma: ['scale', 0.1, 0.01]\n")
         f.write("  - epsilon: [0.01, 0.05, 0.1]\n\n")
         
-        # Results
+        # Results - Validation
         f.write("MODEL COMPARISON (VALIDATION SET)\n")
         f.write("-"*70 + "\n")
         f.write(f"{'Model':<20} | {'Val R²':<10} | {'Val MAE':<10} | {'Val RMSE':<10}\n")
@@ -273,7 +276,19 @@ def save_report(report_path, medium_name, results, best, test_metrics, X_train, 
             f.write(f"{r['model']:<20} | {m['r2']:<10.3f} | {m['mae']:<10.2f} | {m['rmse']:<10.2f}\n")
         
         f.write("\n")
-        f.write(f"Winner: {best['model']}\n\n")
+        f.write(f"Winner (by Val R²): {best['model']}\n\n")
+        
+        # Results - Test (ALL models)
+        f.write("MODEL COMPARISON (TEST SET - ALL MODELS)\n")
+        f.write("-"*70 + "\n")
+        f.write(f"{'Model':<20} | {'Test R²':<10} | {'Test MAE':<10} | {'Test RMSE':<10}\n")
+        f.write("-"*70 + "\n")
+        
+        for r in sorted(results, key=lambda x: x["test_metrics"]["r2"], reverse=True):
+            m = r["test_metrics"]
+            f.write(f"{r['model']:<20} | {m['r2']:<10.3f} | {m['mae']:<10.2f} | {m['rmse']:<10.2f}\n")
+        
+        f.write("\n")
         
         # Best hyperparameters
         f.write("BEST HYPERPARAMETERS\n")
@@ -319,7 +334,7 @@ def create_summary_report(all_results):
         f.write("MEDIUM-SPECIFIC MODEL TRAINING - SUMMARY\n")
         f.write("="*70 + "\n\n")
         
-        f.write("COMPARISON TABLE\n")
+        f.write("BEST MODEL BY MEDIUM (selected by Val R²)\n")
         f.write("-"*70 + "\n")
         f.write(f"{'Medium':<10} | {'Best Model':<15} | {'Val R²':<10} | {'Test R²':<10} | {'Test RMSE':<10}\n")
         f.write("-"*70 + "\n")
@@ -334,17 +349,32 @@ def create_summary_report(all_results):
             f.write(f"{medium:<10} | {model:<15} | {val_r2:<10.3f} | {test_r2:<10.3f} | {test_rmse:<10.2f}\n")
         
         f.write("\n")
+        f.write("ALL MODELS TEST PERFORMANCE\n")
+        f.write("-"*70 + "\n")
+        f.write(f"{'Medium':<10} | {'Model':<15} | {'Test R²':<10} | {'Test MAE':<10} | {'Test RMSE':<10}\n")
+        f.write("-"*70 + "\n")
+        
+        for result in all_results:
+            for model_result in result["all_models"]:
+                medium = result["medium"]
+                model = model_result["model"]
+                test_r2 = model_result["test_metrics"]["r2"]
+                test_mae = model_result["test_metrics"]["mae"]
+                test_rmse = model_result["test_metrics"]["rmse"]
+                f.write(f"{medium:<10} | {model:<15} | {test_r2:<10.3f} | {test_mae:<10.2f} | {test_rmse:<10.2f}\n")
+        
+        f.write("\n")
         f.write("COMPARISON WITH GENERAL MODEL\n")
         f.write("-"*70 + "\n")
         f.write("General Model (trained on all mediums):\n")
-        f.write("  Val R²:  0.693\n")
-        f.write("  Test R²: 0.417\n\n")
+        f.write("  Random Forest - Val R²: 0.693, Test R²: 0.417\n")
+        f.write("  SVR           - Val R²: 0.556, Test R²: 0.370\n\n")
         
-        f.write("Medium-Specific Models:\n")
+        f.write("Medium-Specific Best Models:\n")
         for result in all_results:
-            f.write(f"  {result['medium']:<6} - Test R²: {result['test_metrics']['r2']:.3f}")
+            f.write(f"  {result['medium']:<6} ({result['best_model']}) - Test R²: {result['test_metrics']['r2']:.3f}")
             diff = result['test_metrics']['r2'] - 0.417
-            f.write(f"  (Δ = {diff:+.3f})\n")
+            f.write(f"  (Δ vs general RF = {diff:+.3f})\n")
         
         f.write("\n")
         f.write("INTERPRETATION\n")

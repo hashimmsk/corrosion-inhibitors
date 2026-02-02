@@ -39,7 +39,14 @@ Model                | Val R²     | Val MAE    | Val RMSE
 random_forest        | 0.025      | 15.81      | 19.78     
 svr                  | -0.021     | 15.25      | 20.25     
 
-Winner: random_forest
+Winner (by Val R²): random_forest
+
+MODEL COMPARISON (TEST SET - ALL MODELS)
+----------------------------------------------------------------------
+Model                | Test R²    | Test MAE   | Test RMSE 
+----------------------------------------------------------------------
+svr                  | 0.401      | 10.88      | 16.28     
+random_forest        | 0.205      | 15.28      | 18.77     
 
 BEST HYPERPARAMETERS
 ----------------------------------------------------------------------
