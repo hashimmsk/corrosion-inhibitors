@@ -121,7 +121,6 @@ def main():
     }
     (OUT_DIR / "results.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
 
-    # Save test predictions for best model (include pH and medium for analysis)
     pred_df = pd.DataFrame({
         "y_true": y_test.values,
         "y_pred": best["test_predictions"],
