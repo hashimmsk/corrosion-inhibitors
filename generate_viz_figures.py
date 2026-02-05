@@ -13,6 +13,7 @@ from pathlib import Path
 # Set style for publication quality
 plt.style.use('seaborn-v0_8-whitegrid')
 plt.rcParams['font.family'] = 'sans-serif'
+plt.rcParams['font.sans-serif'] = ['Arial']
 plt.rcParams['font.size'] = 12
 plt.rcParams['axes.labelsize'] = 14
 plt.rcParams['axes.titlesize'] = 16
@@ -132,7 +133,7 @@ available_mediums = [m for m in medium_order if m in cleaned_df['medium'].values
 plot_data = cleaned_df[cleaned_df['medium'].isin(available_mediums)]
 
 sns.boxplot(data=plot_data, x='medium', y='IE', order=available_mediums, 
-            palette=palette, ax=ax, linewidth=1.5)
+            palette=palette, ax=ax, linewidth=1.5, showfliers=False)
 ax.set_xlabel('Corrosive Medium')
 ax.set_ylabel('Inhibition Efficiency (%)')
 ax.set_title('IE Distribution Across Corrosive Mediums')

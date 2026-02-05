@@ -9,4 +9,4 @@ data/processed/
 data/models/
 data/eda/
 
-data/viz_figures/*.mp4
+# data/viz_figures/*.mp4
