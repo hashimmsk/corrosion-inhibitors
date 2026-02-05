@@ -36,20 +36,31 @@ feature_importance = pd.read_csv(DATA_DIR / "feature_importance" / "baseline_imp
 # ============================================================
 fig, ax = plt.subplots(figsize=(8, 5))
 
-models = ['Random Forest', 'SVR']
-val_r2 = [0.693, 0.556]
-val_rmse = [20.4, 24.6]
+# Read metrics from results.json instead of hardcoding
+model_names = []
+val_r2 = []
+val_rmse = []
+test_r2 = []
+test_rmse = []
 
-x = np.arange(len(models))
+for m in results["all_models"]:
+    name = "Random Forest" if m["model"] == "random_forest" else "SVR"
+    model_names.append(name)
+    val_r2.append(m["val_metrics"]["r2"])
+    val_rmse.append(m["val_metrics"]["rmse"])
+    test_r2.append(m["test_metrics"]["r2"])
+    test_rmse.append(m["test_metrics"]["rmse"])
+
+x = np.arange(len(model_names))
 width = 0.35
 
-bars1 = ax.bar(x - width/2, val_r2, width, label='R² Score', color='#2E86AB', edgecolor='black')
-bars2 = ax.bar(x + width/2, [r/30 for r in val_rmse], width, label='RMSE (scaled ÷30)', color='#E94F37', edgecolor='black')
+bars1 = ax.bar(x - width/2, val_r2, width, label='Val R²', color='#2E86AB', edgecolor='black')
+bars2 = ax.bar(x + width/2, test_r2, width, label='Test R²', color='#E94F37', edgecolor='black')
 
-ax.set_ylabel('Score')
-ax.set_title('Model Performance Comparison\n(Validation Set)')
+ax.set_ylabel('R² Score')
+ax.set_title('Model Performance Comparison\n(Validation vs Test Set)')
 ax.set_xticks(x)
-ax.set_xticklabels(models)
+ax.set_xticklabels(model_names)
 ax.legend(loc='upper right')
 ax.set_ylim(0, 1.0)
 
@@ -57,9 +68,9 @@ ax.set_ylim(0, 1.0)
 for bar, val in zip(bars1, val_r2):
     ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.02, 
             f'{val:.3f}', ha='center', va='bottom', fontsize=11, fontweight='bold')
-for bar, val in zip(bars2, val_rmse):
+for bar, val in zip(bars2, test_r2):
     ax.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.02, 
-            f'{val:.1f}', ha='center', va='bottom', fontsize=11, fontweight='bold')
+            f'{val:.3f}', ha='center', va='bottom', fontsize=11, fontweight='bold')
 
 plt.tight_layout()
 plt.savefig(OUTPUT_DIR / "model_comparison_bar.png", dpi=300, bbox_inches='tight', 
@@ -67,29 +78,73 @@ plt.savefig(OUTPUT_DIR / "model_comparison_bar.png", dpi=300, bbox_inches='tight
 plt.close()
 
 # ============================================================
-# FIGURE 2: Predicted vs Actual Scatter Plot
+# FIGURE 2: Predicted vs Actual Scatter Plot (Side-by-side RF vs SVR)
 # ============================================================
-fig, ax = plt.subplots(figsize=(7, 6))
+fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 
 # Color by medium
 colors = {'HCl': '#E94F37', 'NaCl': '#2E86AB', 'CPS': '#4DAA57'}
+
+# Get metrics for both models
+rf_metrics = next(m for m in results["all_models"] if m["model"] == "random_forest")
+svr_metrics = next(m for m in results["all_models"] if m["model"] == "svr")
+
+# Determine prediction columns (handle both old and new format)
+rf_pred_col = "y_pred_random_forest" if "y_pred_random_forest" in test_preds.columns else "y_pred"
+svr_pred_col = "y_pred_svr" if "y_pred_svr" in test_preds.columns else None
+
+# Calculate limits for consistent axes
+all_preds = [test_preds['y_true']]
+if rf_pred_col in test_preds.columns:
+    all_preds.append(test_preds[rf_pred_col])
+if svr_pred_col and svr_pred_col in test_preds.columns:
+    all_preds.append(test_preds[svr_pred_col])
+all_values = pd.concat(all_preds)
+lims = [all_values.min() - 5, all_values.max() + 5]
+
+# Plot 1: Random Forest
+ax = axes[0]
 for medium in test_preds['medium'].unique():
     mask = test_preds['medium'] == medium
-    ax.scatter(test_preds.loc[mask, 'y_true'], test_preds.loc[mask, 'y_pred'],
+    ax.scatter(test_preds.loc[mask, 'y_true'], test_preds.loc[mask, rf_pred_col],
                c=colors.get(medium, 'gray'), label=medium, alpha=0.7, s=80, edgecolors='black', linewidth=0.5)
-
-# Perfect prediction line
-lims = [min(test_preds['y_true'].min(), test_preds['y_pred'].min()) - 5,
-        max(test_preds['y_true'].max(), test_preds['y_pred'].max()) + 5]
 ax.plot(lims, lims, 'k--', alpha=0.5, label='Perfect Prediction', linewidth=2)
-
 ax.set_xlabel('Experimental IE (%)')
 ax.set_ylabel('Predicted IE (%)')
-ax.set_title('Random Forest: Predicted vs Experimental\n(Test Set, R² = 0.417)')
+ax.set_title(f'Random Forest: Predicted vs Experimental\n(Test Set, R² = {rf_metrics["test_metrics"]["r2"]:.3f})')
 ax.legend(loc='upper left')
 ax.set_xlim(lims)
 ax.set_ylim(lims)
 ax.set_aspect('equal')
+
+# Plot 2: SVR
+ax = axes[1]
+if svr_pred_col and svr_pred_col in test_preds.columns:
+    for medium in test_preds['medium'].unique():
+        mask = test_preds['medium'] == medium
+        ax.scatter(test_preds.loc[mask, 'y_true'], test_preds.loc[mask, svr_pred_col],
+                   c=colors.get(medium, 'gray'), label=medium, alpha=0.7, s=80, edgecolors='black', linewidth=0.5)
+    ax.plot(lims, lims, 'k--', alpha=0.5, label='Perfect Prediction', linewidth=2)
+    ax.set_xlabel('Experimental IE (%)')
+    ax.set_ylabel('Predicted IE (%)')
+    ax.set_title(f'SVR: Predicted vs Experimental\n(Test Set, R² = {svr_metrics["test_metrics"]["r2"]:.3f})')
+    ax.legend(loc='upper left')
+    ax.set_xlim(lims)
+    ax.set_ylim(lims)
+    ax.set_aspect('equal')
+else:
+    # Fallback: show RF again with note (SVR predictions not available)
+    for medium in test_preds['medium'].unique():
+        mask = test_preds['medium'] == medium
+        ax.scatter(test_preds.loc[mask, 'y_true'], test_preds.loc[mask, rf_pred_col],
+                   c=colors.get(medium, 'gray'), label=medium, alpha=0.3, s=80, edgecolors='black', linewidth=0.5)
+    ax.plot(lims, lims, 'k--', alpha=0.5, linewidth=2)
+    ax.set_xlabel('Experimental IE (%)')
+    ax.set_ylabel('Predicted IE (%)')
+    ax.set_title(f'SVR: Predicted vs Experimental\n(Test Set, R² = {svr_metrics["test_metrics"]["r2"]:.3f})\n[Re-run train.py to generate SVR predictions]')
+    ax.set_xlim(lims)
+    ax.set_ylim(lims)
+    ax.set_aspect('equal')
 
 plt.tight_layout()
 plt.savefig(OUTPUT_DIR / "predicted_vs_actual.png", dpi=300, bbox_inches='tight',
@@ -185,19 +240,43 @@ plt.savefig(OUTPUT_DIR / "ie_vs_concentration.png", dpi=300, bbox_inches='tight'
 plt.close()
 
 # ============================================================
-# FIGURE 7: Residual Distribution
+# FIGURE 7: Residual Distribution (Side-by-side RF vs SVR)
 # ============================================================
-fig, ax = plt.subplots(figsize=(7, 5))
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
 
-ax.hist(test_preds['residual'], bins=15, color='#2E86AB', edgecolor='black', alpha=0.8)
+# Determine residual columns
+rf_resid_col = "residual_random_forest" if "residual_random_forest" in test_preds.columns else "residual"
+svr_resid_col = "residual_svr" if "residual_svr" in test_preds.columns else None
+
+# Plot 1: Random Forest
+ax = axes[0]
+rf_residuals = test_preds[rf_resid_col]
+ax.hist(rf_residuals, bins=15, color='#2E86AB', edgecolor='black', alpha=0.8)
 ax.axvline(x=0, color='red', linestyle='--', linewidth=2, label='Zero Error')
-ax.axvline(x=test_preds['residual'].mean(), color='orange', linestyle='-', linewidth=2, 
-           label=f'Mean: {test_preds["residual"].mean():.1f}')
-
+ax.axvline(x=rf_residuals.mean(), color='orange', linestyle='-', linewidth=2, 
+           label=f'Mean: {rf_residuals.mean():.1f}')
 ax.set_xlabel('Residual (Actual - Predicted)')
 ax.set_ylabel('Frequency')
-ax.set_title('Prediction Residual Distribution\n(Test Set)')
+ax.set_title('Random Forest: Residual Distribution\n(Test Set)')
 ax.legend()
+
+# Plot 2: SVR
+ax = axes[1]
+if svr_resid_col and svr_resid_col in test_preds.columns:
+    svr_residuals = test_preds[svr_resid_col]
+    ax.hist(svr_residuals, bins=15, color='#E94F37', edgecolor='black', alpha=0.8)
+    ax.axvline(x=0, color='red', linestyle='--', linewidth=2, label='Zero Error')
+    ax.axvline(x=svr_residuals.mean(), color='orange', linestyle='-', linewidth=2, 
+               label=f'Mean: {svr_residuals.mean():.1f}')
+    ax.set_xlabel('Residual (Actual - Predicted)')
+    ax.set_ylabel('Frequency')
+    ax.set_title('SVR: Residual Distribution\n(Test Set)')
+    ax.legend()
+else:
+    # Fallback: show message
+    ax.text(0.5, 0.5, 'SVR residuals not available.\nRe-run train.py to generate.', 
+            ha='center', va='center', transform=ax.transAxes, fontsize=12)
+    ax.set_title('SVR: Residual Distribution\n(Test Set)')
 
 plt.tight_layout()
 plt.savefig(OUTPUT_DIR / "residual_distribution.png", dpi=300, bbox_inches='tight',

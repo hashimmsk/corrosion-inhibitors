@@ -121,11 +121,20 @@ def main():
     }
     (OUT_DIR / "results.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
 
+    # Save test predictions for ALL models (for comparison visualizations)
     pred_df = pd.DataFrame({
         "y_true": y_test.values,
-        "y_pred": best["test_predictions"],
-        "residual": y_test.values - best["test_predictions"],
     })
+    
+    # Add predictions from each model
+    for r in results:
+        model_name = r["model"]
+        pred_df[f"y_pred_{model_name}"] = r["test_predictions"]
+        pred_df[f"residual_{model_name}"] = y_test.values - r["test_predictions"]
+    
+    # Also keep best model predictions as default columns for backward compatibility
+    pred_df["y_pred"] = best["test_predictions"]
+    pred_df["residual"] = y_test.values - best["test_predictions"]
     
     # Add original pH and medium from test metadata
     test_meta = features.load_test_metadata()
