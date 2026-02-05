@@ -73,8 +73,23 @@
          but drops significantly in medium-specific models where pH is constant
        - Outputs in data/models/medium_specific/feature_importance/
 
-8. Model Evaluation & Interpretation
-   (TODO)
+8. Model Evaluation & Interpretation (model_interpretation.py)
+   - SHAP analysis: global and local feature importance
+   - Partial Dependence Plots: marginal effect of each feature on IE
+   - Error Analysis: prediction errors by medium, worst predictions
+   - Key findings:
+     * pH has highest SHAP importance (18.4), followed by Conc (10.5)
+     * CPS medium has highest prediction error (MAE=21.2)
+     * Model struggles with extreme IE values
+   - Outputs in data/interpretation/
 
-9. Optimization & Design Use-Case
-   (TODO)
+9. Optimization & Design Use-Case (optimize_inhibitor.py)
+   - Dosage Optimization: find optimal concentration for surfactants
+   - Formulation Recommendation: suggest properties for target IE
+   - Sensitivity Analysis: effect of each feature on predicted IE
+   - Prediction Reference Table: 90 predictions for common scenarios
+   - Key findings:
+     * pH has largest effect on IE (71.6% range)
+     * Concentration has second largest effect (36.0% range)
+     * Model achieves max ~63% IE for NaCl/CPS, ~51% for HCl
+   - Outputs in data/optimization/

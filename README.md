@@ -1,35 +1,28 @@
 # Corrosion Inhibitors – ML Pipeline
 
-Predict corrosion inhibitor performance (inhibition efficiency, **IE**) from molecular formulation features and test conditions.
-
-## Project Status
-
-✅ **Steps 1–7 Complete** | 🔲 Steps 8–9 Pending
-
-**Best Model:** Random Forest  
-**Test Performance:** R² = 0.417 | RMSE = 20.1
+Predict corrosion inhibitor performance (inhibition efficiency, IE) from molecular formulation features and test conditions.
 
 ## Pipeline Overview
 
 | Step | Script | Description | Status |
 |------|--------|-------------|--------|
-| 1-4 | `preprocessing.py` | Data cleaning, IE correction, train/val/test split | ✅ |
-| 5 | `eda.py` | Histograms, correlation heatmap, scatter plots | ✅ |
-| 6 | `features.py`, `feature_importance.py` | Feature loading & baseline importance | ✅ |
-| 7 | `train.py` | Model selection & training (general model) | ✅ |
-| 7a | `medium_specific_preprocessing.py` | Split by medium & preprocess separately | ✅ |
-| 7b | `train_medium_specific.py` | Train models for each medium (HCl, NaCl, CPS) | ✅ |
-| 7c | `analyze_feature_importance.py` | Compare feature importance across mediums | ✅ |
-| 8 | — | Model evaluation & interpretation | 🔲 |
-| 9 | — | Optimization & design use-case | 🔲 |
+| 1-4 | `preprocessing.py` | Data cleaning, IE correction, train/val/test split | Done |
+| 5 | `eda.py` | Histograms, correlation heatmap, scatter plots | Done |
+| 6 | `features.py`, `feature_importance.py` | Feature loading & baseline importance | Done |
+| 7 | `train.py` | Model selection & training (RF & SVR) | Done |
+| 7a | `medium_specific_preprocessing.py` | Split by medium & preprocess separately | Done |
+| 7b | `train_medium_specific.py` | Train models for each medium (HCl, NaCl, CPS) | Done |
+| 7c | `analyze_feature_importance.py` | Compare feature importance across mediums | Done |
+| 8 | `model_interpretation.py` | SHAP analysis, partial dependence, error analysis | Done |
+| 9 | `optimize_inhibitor.py` | Dosage optimization, formulation recommendation | Done |
 
 ## Key Results
 
 ### General Model (All Mediums Combined)
 | Model | Val R² | Test R² |
 |-------|--------|---------|
-| **Random Forest** | **0.693** | **0.417** |
-| SVR (RBF) | 0.555 | — |
+| Random Forest | 0.693 | 0.417 |
+| SVR (RBF) | 0.555 | 0.370 |
 
 ### Medium-Specific Models
 | Medium | Best Model | Val R² | Test R² |
@@ -38,7 +31,7 @@ Predict corrosion inhibitor performance (inhibition efficiency, **IE**) from mol
 | NaCl | Random Forest | 0.025 | 0.204 |
 | CPS | Random Forest | 0.355 | -0.448 |
 
-**Key Finding:** Medium-specific models underperformed the general model due to very small dataset sizes per medium (train: 37-82, test: 8-18 samples). The general model benefits from cross-medium learning.
+Key Finding: Medium-specific models underperformed the general model due to very small dataset sizes per medium (train: 37-82, test: 8-18 samples). The general model benefits from cross-medium learning.
 
 ## Repository Layout
 
@@ -108,9 +101,11 @@ python generate_viz_figures.py           # 8. Create publication figures
 | EO | Ethylene oxide units |
 | Conc | Inhibitor concentration |
 | pH | Solution pH |
-| **IE** | Inhibition efficiency (target) |
+| IE | Inhibition efficiency (target) |
 
-## Next Steps
+## Probable Future Enhancements
 
-- Model evaluation & interpretation (Step 8)
-- Optimization workflow for inhibitor design (Step 9)
+- External validation on new compounds
+- Uncertainty quantification for predictions
+- Deep learning comparison (if more data collected at the lab)
+- Web app deployment for interactive predictions
