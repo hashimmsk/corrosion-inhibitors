@@ -1,0 +1,55 @@
+======================================================================
+LEAVE-ONE-MEDIUM-OUT CROSS-VALIDATION REPORT
+======================================================================
+
+RESEARCH QUESTION
+----------------------------------------------------------------------
+Can ML models for corrosion inhibitors generalize across corrosive
+environments, or are they environment-specific?
+
+EXPERIMENTAL DESIGN
+----------------------------------------------------------------------
+Train on 2 mediums, test on the 3rd (completely unseen medium)
+
+RESULTS SUMMARY
+----------------------------------------------------------------------
+Experiment                     | RF R²    | SVR R²  
+----------------------------------------------------------------------
+HCl+NaCl → CPS                 | -2.102   | -0.434  
+HCl+CPS → NaCl                 | -3.168   | -3.097  
+NaCl+CPS → HCl                 | -6.343   | -6.766  
+----------------------------------------------------------------------
+AVERAGE (Leave-One-Out)        | -3.871   | -3.432  
+General Model (15% test)       | 0.417    | 0.370   
+
+KEY FINDINGS
+----------------------------------------------------------------------
+
+1. MODEL FAILS TO GENERALIZE ACROSS MEDIUMS
+   Average R² < 0 indicates the model performs worse than
+   predicting the mean. The model cannot extrapolate to unseen
+   corrosive environments.
+
+2. pH AS A PROXY FOR MEDIUM
+   The three mediums have distinct, non-overlapping pH values:
+   - HCl:  pH = 0.5  (acidic)
+   - NaCl: pH = 4.9  (neutral)
+   - CPS:  pH = 12.5 (alkaline)
+
+   When testing on an unseen medium, the model must extrapolate
+   to a pH range it never encountered during training.
+
+3. IMPLICATIONS FOR MODEL DEPLOYMENT
+   - The model should NOT be used to predict IE for mediums
+     not present in the training data.
+   - Medium-specific models or additional features may be needed
+     to capture environment-dependent behavior.
+
+
+CONCLUSION
+----------------------------------------------------------------------
+The leave-one-medium-out experiment reveals that the current model
+does NOT generalize well to unseen corrosive environments. This
+suggests that pH (which encodes medium type) is being used as a
+proxy rather than the model learning transferable relationships
+between molecular properties and inhibition efficiency.

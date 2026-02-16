@@ -1,0 +1,74 @@
+[
+  {
+    "train_mediums": [
+      "HCl",
+      "NaCl"
+    ],
+    "test_medium": "CPS",
+    "n_train": 236,
+    "n_test": 53,
+    "train_ph_range": [
+      0.5,
+      4.9
+    ],
+    "test_ph": 12.5,
+    "random_forest_metrics": {
+      "r2": -2.101700379638614,
+      "mae": 47.45974532282373,
+      "rmse": 55.66890005529651
+    },
+    "svr_metrics": {
+      "r2": -0.4335229432825063,
+      "mae": 32.1819141836622,
+      "rmse": 37.84556931590681
+    }
+  },
+  {
+    "train_mediums": [
+      "HCl",
+      "CPS"
+    ],
+    "test_medium": "NaCl",
+    "n_train": 171,
+    "n_test": 118,
+    "train_ph_range": [
+      0.5,
+      12.5
+    ],
+    "test_ph": 4.9,
+    "random_forest_metrics": {
+      "r2": -3.168361618989529,
+      "mae": 44.46880646222279,
+      "rmse": 51.853838703598974
+    },
+    "svr_metrics": {
+      "r2": -3.0968329929591247,
+      "mae": 42.458924221000984,
+      "rmse": 51.407010449066114
+    }
+  },
+  {
+    "train_mediums": [
+      "NaCl",
+      "CPS"
+    ],
+    "test_medium": "HCl",
+    "n_train": 171,
+    "n_test": 118,
+    "train_ph_range": [
+      4.9,
+      12.5
+    ],
+    "test_ph": 0.5,
+    "random_forest_metrics": {
+      "r2": -6.343418688853666,
+      "mae": 53.8388237309943,
+      "rmse": 59.8057513877389
+    },
+    "svr_metrics": {
+      "r2": -6.766144776060175,
+      "mae": 56.62383066280725,
+      "rmse": 61.50303494480074
+    }
+  }
+]

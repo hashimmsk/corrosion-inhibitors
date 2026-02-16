@@ -1,0 +1,105 @@
+======================================================================
+OPTIMAL FORMULATION ANALYSIS REPORT
+======================================================================
+
+OBJECTIVE
+----------------------------------------------------------------------
+Identify optimal surfactant formulations (C#, Mw, HLB, EO, Conc)
+for maximizing inhibition efficiency (IE) in each corrosive medium.
+
+OPTIMAL FORMULATIONS BY MEDIUM
+----------------------------------------------------------------------
+
+HCl (pH = 0.5):
+  Carbon Number (C#):        0
+  Molecular Weight (Mw):     3300
+  HLB Value:                 4.50
+  Ethylene Oxide Units (EO): 8.0
+  Optimal Concentration:     0.0571 (original units)
+  Maximum Predicted IE:      80.7%
+
+NaCl (pH = 4.9):
+  Carbon Number (C#):        13
+  Molecular Weight (Mw):     244
+  HLB Value:                 3.70
+  Ethylene Oxide Units (EO): 1.0
+  Optimal Concentration:     0.3176 (original units)
+  Maximum Predicted IE:      55.0%
+
+CPS (pH = 12.5):
+  Carbon Number (C#):        0
+  Molecular Weight (Mw):     3300
+  HLB Value:                 4.50
+  Ethylene Oxide Units (EO): 8.0
+  Optimal Concentration:     0.0832 (original units)
+  Maximum Predicted IE:      76.6%
+
+SUMMARY TABLE
+----------------------------------------------------------------------
+Medium   | C#    | Mw     | HLB   | EO   | Conc     | Max IE  
+----------------------------------------------------------------------
+HCl      | 0     | 3300   | 4.50  | 8.0  | 0.0571   | 80.7    %
+NaCl     | 13    | 244    | 3.70  | 1.0  | 0.3176   | 55.0    %
+CPS      | 0     | 3300   | 4.50  | 8.0  | 0.0832   | 76.6    %
+----------------------------------------------------------------------
+
+IMPORTANT LIMITATIONS
+----------------------------------------------------------------------
+
+1. MODEL ACCURACY:
+   - Test R-squared = 0.417 (explains 42% of variance)
+   - RMSE = 20.1% (predictions have ~20% error)
+   - Treat recommendations as DIRECTIONAL GUIDANCE, not precise values
+
+2. CONCENTRATION UNITS:
+   - Values shown are in ORIGINAL units (not scaled)
+   - Verify unit interpretation with experimental protocols
+
+3. TRAINING DATA CONSTRAINTS:
+   - Model can only recommend formulations similar to training data
+   - Cannot extrapolate to novel surfactant designs
+   - Maximum achievable IE is capped by what was observed in data
+
+4. CROSS-MEDIUM GENERALIZATION:
+   - Leave-one-medium-out tests show model CANNOT generalize
+     to unseen corrosive environments (R-squared < 0)
+   - These recommendations are specific to each medium
+
+======================================================================
+CONCLUSION
+======================================================================
+
+The optimization analysis provides the following recommendations:
+
+For HCl (pH=0.5):
+  - Use surfactants with C# around 0
+  - Target HLB value of approximately 4.5
+  - EO units around 8.0
+  - Concentration near 0.0571
+  - Expected IE: up to 81%
+
+For NaCl (pH=4.9):
+  - Use surfactants with C# around 13
+  - Target HLB value of approximately 3.7
+  - EO units around 1.0
+  - Concentration near 0.3176
+  - Expected IE: up to 55%
+
+For CPS (pH=12.5):
+  - Use surfactants with C# around 0
+  - Target HLB value of approximately 4.5
+  - EO units around 8.0
+  - Concentration near 0.0832
+  - Expected IE: up to 77%
+
+These recommendations should be treated as starting points for
+experimental validation, not as definitive prescriptions. The model's
+moderate accuracy (R-squared=0.42) means experimental verification is
+essential before deployment.
+
+The fact that different mediums favor different formulations, combined
+with the model's inability to generalize across mediums (leave-one-out
+R-squared < 0), suggests that inhibitor design is highly environment-
+specific. Future work should focus on understanding the mechanistic
+differences in how surfactants interact with steel surfaces under
+different pH conditions.

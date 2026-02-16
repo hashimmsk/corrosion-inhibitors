@@ -1,0 +1,54 @@
+======================================================================
+MEDIUM-SPECIFIC SHAP ANALYSIS REPORT
+======================================================================
+
+OBJECTIVE
+----------------------------------------------------------------------
+Analyze how EO, HLB, and other molecular descriptors affect
+inhibition efficiency differently across HCl, NaCl, and CPS mediums.
+
+MEAN SHAP VALUES BY MEDIUM
+----------------------------------------------------------------------
+(Positive = feature increases IE, Negative = decreases IE)
+
+Feature    | HCl        | NaCl       | CPS       
+--------------------------------------------------
+C#         |    -1.77 |    -2.87 |    -0.46
+Mw         |    +0.54 |    +0.67 |    +1.47
+HLB        |    +0.94 |    -0.64 |    -0.90
+EO         |    +0.53 |    +0.45 |    +0.44
+Conc       |   -11.21 |    +4.95 |   +15.98
+--------------------------------------------------
+
+KEY FINDINGS
+----------------------------------------------------------------------
+
+1. ETHYLENE OXIDE (EO) EFFECTS:
+   - HCl: EO increases IE (mean SHAP = +0.53)
+   - NaCl: EO increases IE (mean SHAP = +0.45)
+   - CPS: EO increases IE (mean SHAP = +0.44)
+
+2. HLB EFFECTS:
+   - HCl: HLB increases IE (mean SHAP = +0.94)
+   - NaCl: HLB decreases IE (mean SHAP = -0.64)
+   - CPS: HLB decreases IE (mean SHAP = -0.90)
+
+3. CARBON NUMBER (C#) EFFECTS:
+   - HCl: C# decreases IE (mean SHAP = -1.77)
+   - NaCl: C# decreases IE (mean SHAP = -2.87)
+   - CPS: C# decreases IE (mean SHAP = -0.46)
+
+======================================================================
+CONCLUSION
+======================================================================
+
+The medium-specific SHAP analysis reveals distinct patterns:
+
+- EO and HLB show environment-dependent effects, with their
+  contributions to IE varying in magnitude across mediums.
+
+- The feature importance hierarchy differs by environment,
+  confirming that optimal surfactant design is medium-specific.
+
+- These differences likely reflect pH-dependent changes in
+  surfactant charge, micelle formation, and surface adsorption.
