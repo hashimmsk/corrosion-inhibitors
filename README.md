@@ -15,6 +15,8 @@ Predict corrosion inhibitor performance (inhibition efficiency, IE) from molecul
 | 7c | `analyze_feature_importance.py` | Compare feature importance across mediums | Done |
 | 8 | `model_interpretation.py` | SHAP analysis, partial dependence, error analysis | Done |
 | 9 | `optimize_inhibitor.py` | Dosage optimization, formulation recommendation | Done |
+| A | `virtual_sample_generation.py` | KDE-based Virtual Sample Generation (Pathway A) | Done |
+| A | `train_with_vsg.py` | Train models with VSG-augmented data | Done |
 
 ## Key Results
 
@@ -23,6 +25,13 @@ Predict corrosion inhibitor performance (inhibition efficiency, IE) from molecul
 |-------|--------|---------|
 | Random Forest | 0.693 | 0.417 |
 | SVR (RBF) | 0.555 | 0.370 |
+
+### Pathway A: With Virtual Sample Generation (VSG)
+| Model | Val R² | Test R² |
+|-------|--------|---------|
+| Random Forest | 0.644 | 0.403 |
+| SVR (RBF) | 0.543 | 0.346 |
+(VSG: 500 virtual samples, medium-aware balancing; run `python train_with_vsg.py`)
 
 ### Medium-Specific Models
 | Medium | Best Model | Val R² | Test R² |
@@ -56,6 +65,7 @@ Key Finding: Medium-specific models underperformed the general model due to very
 │   │       └── CPS/                    # CPS-specific data
 │   ├── models/
 │   │   ├── results.json, test_predictions.csv  # General model
+│   │   ├── vsg/                                 # Pathway A: VSG-augmented results
 │   │   └── medium_specific/
 │   │       ├── HCl/                    # HCl model results
 │   │       ├── NaCl/                   # NaCl model results
@@ -89,6 +99,10 @@ python analyze_feature_importance.py     # 7. Compare feature importance
 
 # Generate Figures
 python generate_viz_figures.py           # 8. Create publication figures
+
+# Pathway A: Training with Virtual Sample Generation
+python virtual_sample_generation.py      # Demo VSG (generates 500 virtual samples)
+python train_with_vsg.py                # Train with augmented data; results in data/models/vsg/
 ```
 
 ## Features
