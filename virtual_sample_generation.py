@@ -13,7 +13,7 @@ small dataset", Theoretical Chemistry Accounts (2024).
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional, Tuple, Union
+from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -116,6 +116,7 @@ def generate_virtual_samples(
     bandwidth: Optional[float] = None,
     random_state: int = 0,
     save_path: Optional[Union[str, Path]] = None,
+    feature_columns: Optional[Sequence[str]] = None,
 ) -> Tuple[pd.DataFrame, pd.Series]:
     """
     Generate virtual training samples using KDE-based VSG.
@@ -146,6 +147,9 @@ def generate_virtual_samples(
     save_path : str or Path, optional
         If provided, save the synthetic samples (features + IE) to this CSV path.
         When medium_balance=True, also saves a 'medium' column.
+    feature_columns : sequence of str, optional
+        Columns to use as features. If None, uses FEATURE_COLUMNS (original 6).
+        Use for extended feature sets (e.g. 6 + 40 RDKit descriptors).
 
     Returns
     -------
@@ -154,10 +158,11 @@ def generate_virtual_samples(
     y_aug : pd.Series
         Augmented targets (original + virtual).
     """
-    feature_cols = [c for c in FEATURE_COLUMNS if c in X_train.columns]
-    if len(feature_cols) != len(FEATURE_COLUMNS):
+    feature_cols = list(feature_columns) if feature_columns is not None else list(FEATURE_COLUMNS)
+    missing = [c for c in feature_cols if c not in X_train.columns]
+    if missing:
         raise ValueError(
-            f"X_train must contain {FEATURE_COLUMNS}. Found: {list(X_train.columns)}"
+            f"X_train missing columns: {missing}. Available: {list(X_train.columns)}"
         )
 
     X = X_train[feature_cols].values

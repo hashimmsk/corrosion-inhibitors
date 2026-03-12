@@ -17,6 +17,10 @@ Predict corrosion inhibitor performance (inhibition efficiency, IE) from molecul
 | 9 | `optimize_inhibitor.py` | Dosage optimization, formulation recommendation | Done |
 | A | `virtual_sample_generation.py` | KDE-based Virtual Sample Generation (Pathway A) | Done |
 | A | `train_with_vsg.py` | Train models with VSG-augmented data | Done |
+| B | `rdkit_descriptors.py` | RDKit 2D descriptors + PFI selection | Done |
+| B | `preprocess_extended.py` | Extended features (6 + 40 RDKit) | Done |
+| B | `train_extended.py` | Train on extended features (no VSG) | Done |
+| B | `train_extended_vsg.py` | Train on extended + VSG (combined) | Done |
 
 ## Key Results
 
@@ -32,6 +36,19 @@ Predict corrosion inhibitor performance (inhibition efficiency, IE) from molecul
 | Random Forest | 0.644 | 0.403 |
 | SVR (RBF) | 0.543 | 0.346 |
 (VSG: 500 virtual samples, medium-aware balancing; run `python train_with_vsg.py`)
+
+### Extended Features (6 + 40 RDKit descriptors)
+| Model | Val R² | Test R² |
+|-------|--------|---------|
+| Random Forest | 0.647 | **0.488** |
+| SVR (RBF) | -0.001 | -0.104 |
+(RDKit descriptors from surrogate SMILES; PFI-selected top 40; run `python preprocess_extended.py` then `python train_extended.py`)
+
+### Extended + VSG (combined)
+| Model | Val R² | Test R² |
+|-------|--------|---------|
+| Random Forest | 0.644 | 0.374 |
+(RDKit + VSG; run `python train_extended_vsg.py`)
 
 ### Medium-Specific Models
 | Medium | Best Model | Val R² | Test R² |
@@ -59,6 +76,7 @@ Key Finding: Medium-specific models underperformed the general model due to very
 ├── data/
 │   ├── processed/
 │   │   ├── train.csv, val.csv, test.csv, cleaned_full.csv  # General splits
+│   │   ├── extended/                   # Extended (6+40 RDKit) train/val/test
 │   │   └── medium_specific/
 │   │       ├── HCl/                    # HCl-specific data
 │   │       ├── NaCl/                   # NaCl-specific data
@@ -103,6 +121,12 @@ python generate_viz_figures.py           # 8. Create publication figures
 # Pathway A: Training with Virtual Sample Generation
 python virtual_sample_generation.py      # Demo VSG (generates 500 virtual samples)
 python train_with_vsg.py                # Train with augmented data; results in data/models/vsg/
+
+# Extended + RDKit: Combined (rows + columns)
+pip install rdkit                       # Required for RDKit descriptors
+python preprocess_extended.py            # 6 + 40 RDKit features; outputs in data/processed/extended/
+python train_extended.py                # Train on extended (no VSG); best Test R²
+python train_extended_vsg.py            # Train on extended + VSG; results in data/models/extended_vsg/
 ```
 
 ## Features
