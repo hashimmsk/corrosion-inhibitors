@@ -1,0 +1,17 @@
+{
+  "optimal_n_top": 10,
+  "optimal_total_features": 16,
+  "test_r2": 0.5034,
+  "top_descriptors": [
+    "EState_VSA4",
+    "AvgIpc",
+    "VSA_EState7",
+    "FpDensityMorgan3",
+    "MolLogP",
+    "BCUT2D_LOGPHI",
+    "BCUT2D_CHGLO",
+    "Chi3n",
+    "qed",
+    "FpDensityMorgan1"
+  ]
+}
